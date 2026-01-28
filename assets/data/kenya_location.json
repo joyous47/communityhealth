@@ -1,0 +1,1138 @@
+{
+  "counties": [
+    {
+      "name": "Mombasa",
+      "subcounties": [
+        {
+          "name": "Mvita",
+          "divisions": [
+            {
+              "name": "Town",
+              "locations": [
+                {
+                  "name": "Old Town",
+                  "villages": ["Ndia Kuu", "Kilindini", "Port Reitz"]
+                },
+                {
+                  "name": "Tononoka",
+                  "villages": ["Tononoka", "Mjambere", "Chaani"]
+                }
+              ]
+            },
+            {
+              "name": "Tudor",
+              "locations": [
+                {
+                  "name": "Tudor",
+                  "villages": ["Nyali Beach", "Bamburi", "Mwaenzi"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Kisauni",
+          "divisions": [
+            {
+              "name": "Jomvu",
+              "locations": [
+                {
+                  "name": "Jomvu Kenyatta",
+                  "villages": ["Jomvu", "Kipevu", "Changamwe"]
+                }
+              ]
+            },
+            {
+              "name": "Likoni",
+              "locations": [
+                {
+                  "name": "Likoni",
+                  "villages": ["Likoni", "Mtongwe", "Lunga Lunga"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Nyali",
+          "divisions": [
+            {
+              "name": "Nyali",
+              "locations": [
+                {
+                  "name": "Nyali",
+                  "villages": ["Nyali", "Frere Town", "Maweni"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kwale",
+      "subcounties": [
+        {
+          "name": "Matuga",
+          "divisions": [
+            {
+              "name": "Matuga",
+              "locations": [
+                {
+                  "name": "Matuga",
+                  "villages": ["Matuga", "Mkurumudzi", "Mwaminji"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Lunga Lunga",
+          "divisions": [
+            {
+              "name": "Lunga Lunga",
+              "locations": [
+                {
+                  "name": "Lunga Lunga",
+                  "villages": ["Lunga Lunga", "Pongwe", "Mwaluganje"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Kinango",
+          "divisions": [
+            {
+              "name": "Kinango",
+              "locations": [
+                {
+                  "name": "Kinango",
+                  "villages": ["Kinango", "Kizimkazi", "Mwali"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Msambweni",
+          "divisions": [
+            {
+              "name": "Msambweni",
+              "locations": [
+                {
+                  "name": "Msambweni",
+                  "villages": ["Msambweni", "Vanga", "Ramisi"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kilifi",
+      "subcounties": [
+        {
+          "name": "Kilifi North",
+          "divisions": [
+            {
+              "name": "Malindi",
+              "locations": [
+                {
+                  "name": "Malindi Town",
+                  "villages": ["Malindi", "Watamu", "Gedi"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Kilifi South",
+          "divisions": [
+            {
+              "name": "Mombasa-Kilifi",
+              "locations": [
+                {
+                  "name": "Mtwapa",
+                  "villages": ["Mtwapa", "Kikambala", "Junju"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tana River",
+      "subcounties": [
+        {
+          "name": "Lamu",
+          "divisions": [
+            {
+              "name": "Lamu West",
+              "locations": [
+                {
+                  "name": "Lamu",
+                  "villages": ["Lamu Town", "Shela", "Manda"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Lamu",
+      "subcounties": [
+        {
+          "name": "Lamu",
+          "divisions": [
+            {
+              "name": "Lamu",
+              "locations": [
+                {
+                  "name": "Lamu Town",
+                  "villages": ["Lamu", "Shela", "Manda Island"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Taita-Taveta",
+      "subcounties": [
+        {
+          "name": "Taita",
+          "divisions": [
+            {
+              "name": "Wundanyi",
+              "locations": [
+                {
+                  "name": "Wundanyi",
+                  "villages": ["Wundanyi", "Mwakitani", "Kishushe"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Taveta",
+          "divisions": [
+            {
+              "name": "Taveta",
+              "locations": [
+                {
+                  "name": "Taveta",
+                  "villages": ["Taveta", "Voi", "Mtito Andei"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Garissa",
+      "subcounties": [
+        {
+          "name": "Garissa",
+          "divisions": [
+            {
+              "name": "Garissa",
+              "locations": [
+                {
+                  "name": "Garissa Town",
+                  "villages": ["Garissa", "Bura", "Modogashe"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Wajir",
+      "subcounties": [
+        {
+          "name": "Wajir North",
+          "divisions": [
+            {
+              "name": "Wajir",
+              "locations": [
+                {
+                  "name": "Wajir Town",
+                  "villages": ["Wajir", "Hamar", "Wagalla"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Mandera",
+      "subcounties": [
+        {
+          "name": "Mandera Central",
+          "divisions": [
+            {
+              "name": "Mandera",
+              "locations": [
+                {
+                  "name": "Mandera Town",
+                  "villages": ["Mandera", "Kalacha", "Elwak"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Marsabit",
+      "subcounties": [
+        {
+          "name": "Marsabit",
+          "divisions": [
+            {
+              "name": "Marsabit",
+              "locations": [
+                {
+                  "name": "Marsabit Town",
+                  "villages": ["Marsabit", "North Horr", "Laisamis"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Isiolo",
+      "subcounties": [
+        {
+          "name": "Isiolo",
+          "divisions": [
+            {
+              "name": "Isiolo",
+              "locations": [
+                {
+                  "name": "Isiolo Town",
+                  "villages": ["Isiolo", "Merti", "Kajado"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Samburu",
+      "subcounties": [
+        {
+          "name": "Samburu",
+          "divisions": [
+            {
+              "name": "Maralal",
+              "locations": [
+                {
+                  "name": "Maralal",
+                  "villages": ["Maralal", "Wamba", "Suguta"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Turkana",
+      "subcounties": [
+        {
+          "name": "Turkana Central",
+          "divisions": [
+            {
+              "name": "Lodwar",
+              "locations": [
+                {
+                  "name": "Lodwar Town",
+                  "villages": ["Lodwar", "Kalokol", "Todonyang"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "West Pokot",
+      "subcounties": [
+        {
+          "name": "West Pokot",
+          "divisions": [
+            {
+              "name": "Kapenguria",
+              "locations": [
+                {
+                  "name": "Kapenguria",
+                  "villages": ["Kapenguria", "Ortum", "Weiwei"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Uasin Gishu",
+      "subcounties": [
+        {
+          "name": "Kapseret",
+          "divisions": [
+            {
+              "name": "Kapseret",
+              "locations": [
+                {
+                  "name": "Kapseret",
+                  "villages": ["Kapseret", "Kipchoge", "Cheptiret"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Eldoret",
+          "divisions": [
+            {
+              "name": "Eldoret",
+              "locations": [
+                {
+                  "name": "Eldoret Town",
+                  "villages": ["Eldoret", "Kaiboi", "Kapsokwony"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Elgeyo-Marakwet",
+      "subcounties": [
+        {
+          "name": "Elgeyo",
+          "divisions": [
+            {
+              "name": "Iten",
+              "locations": [
+                {
+                  "name": "Iten Town",
+                  "villages": ["Iten", "Kabarnet", "Kipng'etich"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nandi",
+      "subcounties": [
+        {
+          "name": "Nandi Central",
+          "divisions": [
+            {
+              "name": "Kapsabet",
+              "locations": [
+                {
+                  "name": "Kapsabet",
+                  "villages": ["Kapsabet", "Tinderet", "Songhor"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Baringo",
+      "subcounties": [
+        {
+          "name": "Baringo Central",
+          "divisions": [
+            {
+              "name": "Kabarnet",
+              "locations": [
+                {
+                  "name": "Kabarnet",
+                  "villages": ["Kabarnet", "Mogotio", "Ravine"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Laikipia",
+      "subcounties": [
+        {
+          "name": "Laikipia West",
+          "divisions": [
+            {
+              "name": "Rumuruti",
+              "locations": [
+                {
+                  "name": "Rumuruti",
+                  "villages": ["Rumuruti", "Salama", "Thingira"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nakuru",
+      "subcounties": [
+        {
+          "name": "Nakuru Town",
+          "divisions": [
+            {
+              "name": "Nakuru",
+              "locations": [
+                {
+                  "name": "Nakuru Town",
+                  "villages": ["Nakuru Central", "Flamingo", "Lanet"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Naivasha",
+          "divisions": [
+            {
+              "name": "Naivasha",
+              "locations": [
+                {
+                  "name": "Naivasha Town",
+                  "villages": ["Naivasha", "Mai Mahiu", "Olkaria"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nairobi",
+      "subcounties": [
+        {
+          "name": "Westlands",
+          "divisions": [
+            {
+              "name": "Kangemi",
+              "locations": [
+                {
+                  "name": "Kangemi North",
+                  "villages": ["Kangemi", "Nairobi West", "Lavington"]
+                }
+              ]
+            },
+            {
+              "name": "Kitisuru",
+              "locations": [
+                {
+                  "name": "Kitisuru",
+                  "villages": ["Kitisuru", "Kileleshwa", "Ridgeways"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Dagoretti",
+          "divisions": [
+            {
+              "name": "Dagoretti North",
+              "locations": [
+                {
+                  "name": "Kilimani",
+                  "villages": ["Kilimani", "Nairobi Hill", "Mugumo"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Kibra",
+          "divisions": [
+            {
+              "name": "Langa Langa",
+              "locations": [
+                {
+                  "name": "Langa Langa",
+                  "villages": ["Langa Langa", "Soweto", "Makina"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Kasarani",
+          "divisions": [
+            {
+              "name": "Kasarani",
+              "locations": [
+                {
+                  "name": "Kasarani",
+                  "villages": ["Kasarani", "Mwiki", "Ruai"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Langata",
+          "divisions": [
+            {
+              "name": "Langata",
+              "locations": [
+                {
+                  "name": "Langata",
+                  "villages": ["Langata", "Otiende", "Nyayo"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kajiado",
+      "subcounties": [
+        {
+          "name": "Kajiado North",
+          "divisions": [
+            {
+              "name": "Oloosirkon",
+              "locations": [
+                {
+                  "name": "Oloosirkon",
+                  "villages": ["Oloosirkon", "Kiserian", "Ongata Rongai"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Kajiado South",
+          "divisions": [
+            {
+              "name": "Loitokitok",
+              "locations": [
+                {
+                  "name": "Loitokitok",
+                  "villages": ["Loitokitok", "Kimana", "Olorua"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kericho",
+      "subcounties": [
+        {
+          "name": "Kericho",
+          "divisions": [
+            {
+              "name": "Kericho",
+              "locations": [
+                {
+                  "name": "Kericho Town",
+                  "villages": ["Kericho", "Chepsaita", "Sisiyet"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bomet",
+      "subcounties": [
+        {
+          "name": "Bomet",
+          "divisions": [
+            {
+              "name": "Bomet",
+              "locations": [
+                {
+                  "name": "Bomet Town",
+                  "villages": ["Bomet", "Kabisang", "Kipchoge"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kakamega",
+      "subcounties": [
+        {
+          "name": "Kakamega Central",
+          "divisions": [
+            {
+              "name": "Kakamega",
+              "locations": [
+                {
+                  "name": "Kakamega Town",
+                  "villages": ["Kakamega", "Mumias", "Isukha"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Vihiga",
+      "subcounties": [
+        {
+          "name": "Vihiga",
+          "divisions": [
+            {
+              "name": "Vihiga",
+              "locations": [
+                {
+                  "name": "Vihiga Town",
+                  "villages": ["Vihiga", "Hamisi", "Sabatia"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Bungoma",
+      "subcounties": [
+        {
+          "name": "Bungoma Central",
+          "divisions": [
+            {
+              "name": "Bungoma",
+              "locations": [
+                {
+                  "name": "Bungoma Town",
+                  "villages": ["Bungoma", "Webuye", "Kimilili"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Busia",
+      "subcounties": [
+        {
+          "name": "Busia",
+          "divisions": [
+            {
+              "name": "Busia",
+              "locations": [
+                {
+                  "name": "Busia Town",
+                  "villages": ["Busia", "Butula", "Budalangi"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Siaya",
+      "subcounties": [
+        {
+          "name": "Siaya",
+          "divisions": [
+            {
+              "name": "Siaya",
+              "locations": [
+                {
+                  "name": "Siaya Town",
+                  "villages": ["Siaya", "Rarieda", "Ugunja"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kisumu",
+      "subcounties": [
+        {
+          "name": "Kisumu Central",
+          "divisions": [
+            {
+              "name": "Kisumu",
+              "locations": [
+                {
+                  "name": "Kisumu Town",
+                  "villages": ["Kisumu", "Milimani", "Kondele"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Homa Bay",
+      "subcounties": [
+        {
+          "name": "Homa Bay",
+          "divisions": [
+            {
+              "name": "Homa Bay",
+              "locations": [
+                {
+                  "name": "Homa Bay Town",
+                  "villages": ["Homa Bay", "Mbita", "Suba"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Migori",
+      "subcounties": [
+        {
+          "name": "Migori",
+          "divisions": [
+            {
+              "name": "Migori",
+              "locations": [
+                {
+                  "name": "Migori Town",
+                  "villages": ["Migori", "Rongo", "Suna"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kisii",
+      "subcounties": [
+        {
+          "name": "Kisii Central",
+          "divisions": [
+            {
+              "name": "Kisii",
+              "locations": [
+                {
+                  "name": "Kisii Town",
+                  "villages": ["Kisii", "Kenyamkela", "Nyamira Road"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nyamira",
+      "subcounties": [
+        {
+          "name": "Nyamira",
+          "divisions": [
+            {
+              "name": "Nyamira",
+              "locations": [
+                {
+                  "name": "Nyamira Town",
+                  "villages": ["Nyamira", "Masaba", "Nyamaiya"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Narok",
+      "subcounties": [
+        {
+          "name": "Narok Central",
+          "divisions": [
+            {
+              "name": "Narok",
+              "locations": [
+                {
+                  "name": "Narok Town",
+                  "villages": ["Narok", "Ololulung", "Suswa"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Murang'a",
+      "subcounties": [
+        {
+          "name": "Murang'a Central",
+          "divisions": [
+            {
+              "name": "Murang'a",
+              "locations": [
+                {
+                  "name": "Murang'a Town",
+                  "villages": ["Murang'a", "Makuyu", "Kahuro"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kiambu",
+      "subcounties": [
+        {
+          "name": "Kiambu",
+          "divisions": [
+            {
+              "name": "Kiambu",
+              "locations": [
+                {
+                  "name": "Kiambu Town",
+                  "villages": ["Kiambu", "Ruiru", "Ndumberi"]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Thika",
+          "divisions": [
+            {
+              "name": "Thika",
+              "locations": [
+                {
+                  "name": "Thika Town",
+                  "villages": ["Thika", "Mwea", "Gatanga"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nyeri",
+      "subcounties": [
+        {
+          "name": "Nyeri",
+          "divisions": [
+            {
+              "name": "Nyeri",
+              "locations": [
+                {
+                  "name": "Nyeri Town",
+                  "villages": ["Nyeri", "Aguthi", "Iriamanyugi"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Nyandarua",
+      "subcounties": [
+        {
+          "name": "Nyandarua",
+          "divisions": [
+            {
+              "name": "Nyandarua",
+              "locations": [
+                {
+                  "name": "Ol Kalou",
+                  "villages": ["Ol Kalou", "Engineer", "Mirangine"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Embu",
+      "subcounties": [
+        {
+          "name": "Embu",
+          "divisions": [
+            {
+              "name": "Embu",
+              "locations": [
+                {
+                  "name": "Embu Town",
+                  "villages": ["Embu", "Mugweru", "Nyangambi"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Meru",
+      "subcounties": [
+        {
+          "name": "Meru Central",
+          "divisions": [
+            {
+              "name": "Meru",
+              "locations": [
+                {
+                  "name": "Meru Town",
+                  "villages": ["Meru", "Nkuene", "Mikinduri"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tharaka-Nithi",
+      "subcounties": [
+        {
+          "name": "Tharaka",
+          "divisions": [
+            {
+              "name": "Tharaka",
+              "locations": [
+                {
+                  "name": "Chogoria",
+                  "villages": ["Chogoria", "Kuria", "Kaaga"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Machakos",
+      "subcounties": [
+        {
+          "name": "Machakos",
+          "divisions": [
+            {
+              "name": "Machakos",
+              "locations": [
+                {
+                  "name": "Machakos Town",
+                  "villages": ["Machakos", "Mbooni", "Matungulu"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Makueni",
+      "subcounties": [
+        {
+          "name": "Makueni",
+          "divisions": [
+            {
+              "name": "Makueni",
+              "locations": [
+                {
+                  "name": "Wote",
+                  "villages": ["Wote", "Nzaui", "Mbitini"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kitui",
+      "subcounties": [
+        {
+          "name": "Kitui Central",
+          "divisions": [
+            {
+              "name": "Kitui",
+              "locations": [
+                {
+                  "name": "Kitui Town",
+                  "villages": ["Kitui", "Mwingi", "Mutomo"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kilifi North",
+      "subcounties": [
+        {
+          "name": "Kilifi North",
+          "divisions": [
+            {
+              "name": "Kilifi",
+              "locations": [
+                {
+                  "name": "Kilifi Town",
+                  "villages": ["Kilifi", "Mtondia", "Tezo"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Kirinyaga",
+      "subcounties": [
+        {
+          "name": "Kirinyaga",
+          "divisions": [
+            {
+              "name": "Kirinyaga",
+              "locations": [
+                {
+                  "name": "Kerugoya",
+                  "villages": ["Kerugoya", "Kianyaga", "Gichiche"]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
