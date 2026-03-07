@@ -61,7 +61,7 @@ try {
                     $pdo->beginTransaction();
                     
                     try {
-                        $pdo->prepare("DELETE FROM analyses WHERE health_worker_id = ? OR analyst_id = ?")->execute([$delete_id, $delete_id]);
+                        $pdo->prepare("DELETE FROM analyses WHERE health_worker_id = ?")->execute([$delete_id]);
                         $pdo->prepare("DELETE FROM recommendations WHERE health_worker_id = ?")->execute([$delete_id]);
                         $pdo->prepare("DELETE FROM visualizations WHERE admin_id = ?")->execute([$delete_id]);
                         $pdo->prepare("DELETE FROM reports WHERE citizen_id = ?")->execute([$delete_id]);
@@ -182,7 +182,7 @@ function getRoleColor($role) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Users </title>
+    <title><?php echo t('manage_users'); ?></title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -190,7 +190,7 @@ function getRoleColor($role) {
         .page-header {
             background: linear-gradient(135deg, #4da8da 0%, #0077be 100%);
             color: white;
-            padding: 30px 0;
+
             margin-bottom: 30px;
         }
 
@@ -198,12 +198,14 @@ function getRoleColor($role) {
             margin: 0;
             font-size: 2.5rem;
             font-weight: 700;
+            color: #000;
         }
 
         .page-header p {
             margin: 10px 0 0 0;
             font-size: 1.1rem;
             opacity: 0.9;
+            color:#000;
         }
 
         .stats-grid {
@@ -598,7 +600,6 @@ function getRoleColor($role) {
         
         .container {
             background: white;
-            min-height: 100vh;
             padding: 0;
         }
     </style>
@@ -607,8 +608,8 @@ function getRoleColor($role) {
     <div class="container">
         <div class="page-header">
             <div class="container">
-                <h1><i class="fas fa-users"></i> Manage Users</h1>
-                <p>View and manage all system users</p>
+                <h1><i class="fas fa-users"></i> <?php echo t('manage_users'); ?></h1>
+                <p><?php echo t('manage_users_desc'); ?></p>
             </div>
         </div>
 

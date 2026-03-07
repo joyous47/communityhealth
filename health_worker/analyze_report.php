@@ -119,7 +119,7 @@ $csrf_token = generateCSRFToken();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analyze Report - Disease Surveillance System</title>
+    <title>Analyze Report - Community Health System</title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <style>
         .analyze-container {

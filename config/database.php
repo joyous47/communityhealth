@@ -1,11 +1,10 @@
 <?php
 class Database {
-    
-    private $host = "127.0.0.1";  
-    private $port = "3306";       
+    private $host = "127.0.0.1";
+    private $port = "3306";
     private $db_name = "chmwes_db";
     private $username = "root";
-    private $password = "";       
+    private $password = "";
     public $conn;
     
     public function getConnection() {
@@ -46,7 +45,6 @@ class Database {
             $sql = "CREATE DATABASE IF NOT EXISTS `" . $this->db_name . "` 
                     CHARACTER SET utf8mb4 
                     COLLATE utf8mb4_general_ci";
-            
             $this->conn->exec($sql);
             
             $dsn = "mysql:host=" . $this->host . ";port=" . $this->port . ";dbname=" . $this->db_name;
@@ -61,7 +59,6 @@ class Database {
             );
             
             $this->createTables();
-            
             return $this->conn;
             
         } catch(PDOException $e) {
@@ -78,8 +75,27 @@ class Database {
                 email VARCHAR(100) UNIQUE NOT NULL,
                 password VARCHAR(255) NOT NULL,
                 role ENUM('citizen', 'health_worker', 'admin') NOT NULL,
+                phone_number VARCHAR(20),
+                preferred_language ENUM('en', 'sw') DEFAULT 'en',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                INDEX idx_users_email (email)
+                INDEX idx_users_email (email),
+                INDEX idx_users_role (role)
+            )";
+            $this->conn->exec($sql);
+            
+            $sql = "CREATE TABLE IF NOT EXISTS locations (
+                location_id INT PRIMARY KEY AUTO_INCREMENT,
+                location_name VARCHAR(255) NOT NULL,
+                latitude DECIMAL(10,8),
+                longitude DECIMAL(11,8),
+                county VARCHAR(100),
+                sub_county VARCHAR(100),
+                ward VARCHAR(100),
+                risk_level ENUM('low', 'medium', 'high') DEFAULT 'low',
+                population INT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_locations_county (county),
+                INDEX idx_locations_risk (risk_level)
             )";
             $this->conn->exec($sql);
             
@@ -89,12 +105,21 @@ class Database {
                 disease_name VARCHAR(100) NOT NULL,
                 symptoms TEXT NOT NULL,
                 location VARCHAR(200) NOT NULL,
+                phone_number VARCHAR(20),
+                report_source ENUM('web', 'sms', 'mobile_app') DEFAULT 'web',
+                severity ENUM('mild', 'moderate', 'severe') DEFAULT 'mild',
+                location_id INT,
+                latitude DECIMAL(10,8),
+                longitude DECIMAL(11,8),
                 status ENUM('pending', 'analyzed', 'completed') DEFAULT 'pending',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (citizen_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (location_id) REFERENCES locations(location_id) ON DELETE SET NULL,
                 INDEX idx_reports_citizen (citizen_id),
                 INDEX idx_reports_status (status),
-                INDEX idx_reports_disease (disease_name)
+                INDEX idx_reports_disease (disease_name),
+                INDEX idx_reports_source (report_source),
+                INDEX idx_reports_created (created_at)
             )";
             $this->conn->exec($sql);
             
@@ -150,216 +175,93 @@ class Database {
             )";
             $this->conn->exec($sql);
             
+            $sql = "CREATE TABLE IF NOT EXISTS outbreaks (
+                outbreak_id INT PRIMARY KEY AUTO_INCREMENT,
+                location_id INT,
+                disease_name VARCHAR(100),
+                symptom_type VARCHAR(255),
+                first_case_date DATETIME,
+                alert_date DATETIME,
+                notification_date DATETIME,
+                response_date DATETIME,
+                cases_confirmed INT DEFAULT 0,
+                cases_suspected INT DEFAULT 0,
+                status ENUM('active', 'contained', 'resolved') DEFAULT 'active',
+                notes TEXT,
+                affected_radius_km DECIMAL(10,2) DEFAULT 10.00,
+                latitude DECIMAL(10,8),
+                longitude DECIMAL(11,8),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (location_id) REFERENCES locations(location_id),
+                INDEX idx_outbreaks_status (status),
+                INDEX idx_outbreaks_dates (alert_date)
+            )";
+            $this->conn->exec($sql);
+            
+            $sql = "CREATE TABLE IF NOT EXISTS alert_history (
+                alert_id INT PRIMARY KEY AUTO_INCREMENT,
+                outbreak_id INT,
+                alert_type VARCHAR(100),
+                message TEXT,
+                sent_to TEXT,
+                sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                acknowledged BOOLEAN DEFAULT FALSE,
+                acknowledged_by INT,
+                FOREIGN KEY (outbreak_id) REFERENCES outbreaks(outbreak_id),
+                FOREIGN KEY (acknowledged_by) REFERENCES users(id),
+                INDEX idx_alerts_sent (sent_at),
+                INDEX idx_alerts_ack (acknowledged)
+            )";
+            $this->conn->exec($sql);
+            
+            $sql = "CREATE TABLE IF NOT EXISTS health_education (
+                material_id INT PRIMARY KEY AUTO_INCREMENT,
+                title VARCHAR(255) NOT NULL,
+                content TEXT NOT NULL,
+                language VARCHAR(10) DEFAULT 'en',
+                disease_name VARCHAR(100),
+                symptom_type VARCHAR(100),
+                target_audience VARCHAR(50),
+                created_by INT,
+                views INT DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (created_by) REFERENCES users(id),
+                INDEX idx_education_language (language),
+                INDEX idx_education_disease (disease_name)
+            )";
+            $this->conn->exec($sql);
+            
+            $this->insertDefaultLocations();
+            
         } catch(PDOException $e) {
             throw new Exception("Table creation failed: " . $e->getMessage());
         }
     }
     
-    private function showDetailedError($error) {
-        echo '<div style="background-color: #e7f5ff; color: #212529; padding: 20px; margin: 20px 0; border-radius: 10px; border: 1px solid #339af0;">
-                <h3 style="margin-top: 0; color: #339af0;">Database Connection Error</h3>
-                <p><strong>Error:</strong> ' . htmlspecialchars($error) . '</p>
-                
-                <h4 style="color: #212529;">Current Configuration:</h4>
-                <table style="width: 100%; border-collapse: collapse; border: 1px solid #339af0;">
-                    <tr style="background-color: #e7f5ff;">
-                        <th style="padding: 8px; border: 1px solid #339af0; color: #212529;">Setting</th>
-                        <th style="padding: 8px; border: 1px solid #339af0; color: #212529;">Value</th>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px; border: 1px solid #339af0; color: #212529;">Host</td>
-                        <td style="padding: 8px; border: 1px solid #339af0; color: #212529;">' . $this->host . '</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px; border: 1px solid #339af0; color: #212529;">Port</td>
-                        <td style="padding: 8px; border: 1px solid #339af0; color: #212529;">' . $this->port . '</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px; border: 1px solid #339af0; color: #212529;">Database</td>
-                        <td style="padding: 8px; border: 1px solid #339af0; color: #212529;">' . $this->db_name . '</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px; border: 1px solid #339af0; color: #212529;">Username</td>
-                        <td style="padding: 8px; border: 1px solid #339af0; color: #212529;">' . $this->username . '</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px; border: 1px solid #339af0; color: #212529;">Password</td>
-                        <td style="padding: 8px; border: 1px solid #339af0; color: #212529;">' . ($this->password ? "Set" : "Empty") . '</td>
-                    </tr>
-                </table>
-                
-                <h4 style="color: #212529;">Quick Tests:</h4>
-                <ol style="color: #212529;">
-                    <li>Open phpMyAdmin: <a href="http://localhost/phpmyadmin/" target="_blank" style="color: #339af0;">http://localhost/phpmyadmin/</a></li>
-                    <li>Check if database <code style="background-color: #e7f5ff; padding: 2px 6px; border-radius: 3px; color: #339af0;">' . $this->db_name . '</code> exists</li>
-                    <li>If not, create it manually in phpMyAdmin</li>
-                    <li>Make sure MySQL is running on port ' . $this->port . ' in XAMPP</li>
-                </ol>
-              </div>';
+    private function insertDefaultLocations() {
+        try {
+            $stmt = $this->conn->query("SELECT COUNT(*) FROM locations");
+            $count = $stmt->fetchColumn();
+            
+            if ($count == 0) {
+                $sql = "INSERT INTO locations (location_name, latitude, longitude, county, risk_level) VALUES
+                    ('Nairobi Central', -1.2864, 36.8172, 'Nairobi', 'medium'),
+                    ('Mombasa Island', -4.0435, 39.6682, 'Mombasa', 'high'),
+                    ('Kisumu Town', -0.1022, 34.7617, 'Kisumu', 'medium'),
+                    ('Nakuru Town', -0.3031, 36.0800, 'Nakuru', 'low'),
+                    ('Eldoret Town', 0.5143, 35.2698, 'Uasin Gishu', 'low')";
+                $this->conn->exec($sql);
+            }
+        } catch(PDOException $e) {
+        }
     }
     
-    public function closeConnection() {
-        $this->conn = null;
-    }
-}
-
-function getDB() {
-    static $db = null;
-    if ($db === null) {
-        $database = new Database();
-        $db = $database->getConnection();
-    }
-    return $db;
-}
-
-function sanitize($input) {
-    return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
-}
-
-function testDatabaseConnection() {
-    try {
-        $database = new Database();
-        $db = $database->getConnection();
-        
-        $stmt = $db->query("SELECT 'Database connected successfully!' as message");
-        $result = $stmt->fetch();
-        
-        echo '<div style="background-color: #e7f5ff; color: #212529; padding: 15px; border-radius: 5px; margin: 20px 0; border: 1px solid #339af0;">
-                <h4 style="margin-top: 0; color: #339af0;">✓ Database Connection Successful!</h4>
-                <p style="color: #212529;"><strong>Host:</strong> 127.0.0.1:3306<br>
-                <strong>Database:</strong> chmwes_db<br>
-                <strong>User:</strong> root (no password)</p>
-                <p style="color: #212529;"><strong>Message:</strong> ' . $result['message'] . '</p>
-              </div>';
-        
-        $stmt = $db->query("SHOW TABLES");
-        $tables = $stmt->fetchAll(PDO::FETCH_COLUMN);
-        
-        if (count($tables) > 0) {
-            echo '<div style="background-color: #e7f5ff; color: #212529; padding: 15px; border-radius: 5px; margin: 20px 0; border: 1px solid #339af0;">
-                    <h4 style="margin-top: 0; color: #339af0;">✓ Database Tables Found:</h4>
-                    <ul style="columns: 2; color: #212529;">';
-            foreach ($tables as $table) {
-                echo '<li>' . htmlspecialchars($table) . '</li>';
-            }
-            echo '</ul></div>';
-        } else {
-            echo '<div style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 5px; margin: 20px 0; border: 1px solid #ff922b;">
-                    <h4 style="margin-top: 0; color: #212529;">⚠ No Tables Found</h4>
-                    <p style="color: #212529;">Tables will be created automatically when needed.</p>
-                  </div>';
-        }
-        
-        $database->closeConnection();
-        
-    } catch(Exception $e) {
-        echo '<div style="background-color: #ffe3e3; color: #212529; padding: 15px; border-radius: 5px; margin: 20px 0; border: 1px solid #ff6b6b;">
-                <h4 style="margin-top: 0; color: #c92a2a;">✗ Database Connection Failed</h4>
-                <p style="color: #212529;"><strong>Error:</strong> ' . htmlspecialchars($e->getMessage()) . '</p>
-                <p style="color: #212529;">Please check your XAMPP MySQL is running on port 3306.</p>
+    private function showDetailedError($error) {
+        echo '<div style="background-color: #ffe3e3; padding: 20px; margin: 20px; border-radius: 10px; border: 1px solid #ff6b6b;">
+                <h3 style="color: #c92a2a;">Database Connection Error</h3>
+                <p><strong>Error:</strong> ' . htmlspecialchars($error) . '</p>
+                <p>Please check your XAMPP MySQL is running on port 3306.</p>
               </div>';
     }
-}
-
-function registerUser($username, $email, $password, $role) {
-    try {
-        $db = getDB();
-        
-        $stmt = $db->prepare("SELECT id FROM users WHERE email = ?");
-        $stmt->execute([$email]);
-        if ($stmt->rowCount() > 0) {
-            return [false, "Email already registered", null];
-        }
-        
-        $stmt = $db->prepare("SELECT id FROM users WHERE username = ?");
-        $stmt->execute([$username]);
-        if ($stmt->rowCount() > 0) {
-            return [false, "Username already taken", null];
-        }
-        
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-        
-        $stmt = $db->prepare("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$username, $email, $hashed_password, $role]);
-        
-        $user_id = $db->lastInsertId();
-        
-        return [true, "Registration successful! Please login.", $user_id];
-        
-    } catch(PDOException $e) {
-        return [false, "Registration failed: " . $e->getMessage(), null];
-    }
-}
-
-function loginUser($email, $password) {
-    try {
-        $db = getDB();
-        
-        $stmt = $db->prepare("SELECT id, username, email, password, role, created_at FROM users WHERE email = ?");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (!$user) {
-            return [false, "Invalid email or password", null];
-        }
-        
-        if (!password_verify($password, $user['password'])) {
-            return [false, "Invalid email or password", null];
-        }
-        
-        unset($user['password']);
-        
-        return [true, "Login successful!", $user];
-        
-    } catch(PDOException $e) {
-        return [false, "Login failed: " . $e->getMessage(), null];
-    }
-}
-
-function isLoggedIn() {
-    return isset($_SESSION['user_id']);
-}
-
-function getCurrentUser() {
-    if (isLoggedIn()) {
-        return $_SESSION['user'];
-    }
-    return null;
-}
-
-function getCurrentUserRole() {
-    $user = getCurrentUser();
-    return $user ? $user['role'] : null;
-}
-
-function hasRole($role) {
-    $userRole = getCurrentUserRole();
-    return $userRole === $role;
-}
-
-function requireLogin($redirect_to = 'auth/login.php') {
-    if (!isLoggedIn()) {
-        header("Location: $redirect_to");
-        exit();
-    }
-}
-
-function requireRole($role, $redirect_to = '../index.php') {
-    requireLogin();
-    if (!hasRole($role)) {
-        header("Location: $redirect_to");
-        exit();
-    }
-}
-
-function generateCSRFToken() {
-    if (empty($_SESSION['csrf_token'])) {
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-    }
-    return $_SESSION['csrf_token'];
-}
-
-function verifyCSRFToken($token) {
-    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
 ?>

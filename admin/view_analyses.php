@@ -467,8 +467,8 @@ function getSeverityClass($severity) {
     <div class="container">
         <div class="page-header">
             <div class="container">
-                <h1><i class="fas fa-chart-bar"></i> View Analyses</h1>
-                <p>Review all health worker analyses sent to you</p>
+                <h1><i class="fas fa-chart-bar"></i> View Analysis</h1>
+                <p>Review all health worker analysis sent to you</p>
             </div>
         </div>
 
@@ -495,11 +495,11 @@ function getSeverityClass($severity) {
                 <option value="severity_high" <?php echo ($sort_by === 'severity_high') ? 'selected' : ''; ?>>Severity (High to Low)</option>
             </select>
 
-            <a href="view_analyses.php" style="margin-left: auto;"><i class="fas fa-redo"></i> Reset</a>
+            <a href="view_analysis.php" style="margin-left: auto;"><i class="fas fa-redo"></i> Reset</a>
         </div>
 
         <?php if (!empty($analyses)): ?>
-            <table class="analyses-table">
+            <table class="analysis-table">
                 <thead>
                     <tr>
                         <th><i class="fas fa-virus"></i> Disease</th>
@@ -588,15 +588,15 @@ function getSeverityClass($severity) {
                     <?php endif; ?>
                 </div>
                 <p style="text-align: center; color: #999; margin-top: 15px;">
-                    Showing <?php echo count($analyses); ?> of <?php echo $total_records; ?> analyses | Page <?php echo $page; ?> of <?php echo $total_pages; ?>
+                    Showing <?php echo count($analyses); ?> of <?php echo $total_records; ?> analysis | Page <?php echo $page; ?> of <?php echo $total_pages; ?>
                 </p>
             <?php endif; ?>
 
         <?php else: ?>
             <div class="empty-state">
                 <i class="fas fa-inbox"></i>
-                <h3>No Analyses Found</h3>
-                <p>There are no analyses sent to you yet. Check back later!</p>
+                <h3>No Analysis Found</h3>
+                <p>There are no analysis sent to you yet. Check back later!</p>
             </div>
         <?php endif; ?>
     </div>
@@ -617,7 +617,7 @@ function getSeverityClass($severity) {
             const severity = document.getElementById('severity-filter').value;
             const sort = document.getElementById('sort-filter').value;
             
-            let url = 'view_analyses.php?page=1';
+            let url = 'view_analysis.php?page=1';
             if (sort) url += '&sort=' + encodeURIComponent(sort);
             if (severity) url += '&severity=' + encodeURIComponent(severity);
             

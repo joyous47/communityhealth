@@ -1,0 +1,79 @@
+{
+    "name": "CHMEWS - Community Health Monitoring System",
+    "short_name": "CHMEWS",
+    "description": "Report health issues and track disease outbreaks in your community",
+    "start_url": "/index.php",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#0077cc",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/images/icon-72.png",
+            "sizes": "72x72",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/images/icon-96.png",
+            "sizes": "96x96",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/images/icon-128.png",
+            "sizes": "128x128",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/images/icon-144.png",
+            "sizes": "144x144",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/images/icon-152.png",
+            "sizes": "152x152",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/images/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/images/icon-384.png",
+            "sizes": "384x384",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/images/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable any"
+        }
+    ],
+    "categories": ["health", "medical", "news"],
+    "screenshots": [],
+    "shortcuts": [
+        {
+            "name": "Report Symptoms",
+            "short_name": "Report",
+            "description": "Report new health symptoms",
+            "url": "/citizen/create_report.php",
+            "icons": [{ "src": "/images/icon-96.png", "sizes": "96x96" }]
+        },
+        {
+            "name": "View Dashboard",
+            "short_name": "Dashboard",
+            "description": "View your health dashboard",
+            "url": "/citizen/dashboard.php",
+            "icons": [{ "src": "/images/icon-96.png", "sizes": "96x96" }]
+        }
+    ],
+    "prefer_related_applications": false
+}

@@ -3,7 +3,16 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'sw'])) {
+    $_SESSION['user_lang'] = $_GET['lang'];
+    setcookie('user_lang', $_GET['lang'], time() + (86400 * 30), '/');
+    $redirectUrl = str_replace(['?lang=en', '?lang=sw', '&lang=en', '&lang=sw'], '', $_SERVER['REQUEST_URI']);
+    header('Location: ' . ($redirectUrl ?: 'index.php'));
+    exit;
+}
+
 require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/init_translations.php';
 
 checkSessionTimeout(1800);
 
@@ -12,7 +21,7 @@ $current_role = getCurrentUserRole();
 $username = $current_user ? $current_user['username'] : 'Guest';
 $user_id = $current_user ? $current_user['id'] : null;
 
-$page_title = 'Disease Surveillance System';
+$page_title = t('system_title');
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 <!DOCTYPE html>
@@ -22,25 +31,21 @@ $current_page = basename($_SERVER['PHP_SELF']);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($page_title); ?></title>
     
+    
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
     <link rel="stylesheet" href="../assets/css/charts.css">
     
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #ffffff;
-            color: #000000;
-            margin: 0;
-            padding: 0;
-        }
-
+        
         .main-header {
-            background: #0ea5e9;
+            background: linear-gradient(135deg, #0077cc, #005599);
             color: white;
             padding: 0;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -72,21 +77,19 @@ $current_page = basename($_SERVER['PHP_SELF']);
         
         .logo-icon {
             font-size: 2rem;
-            color: white;
+            color: #0077cc;
         }
         
         .logo-text h1 {
             font-size: 1.8rem;
             margin: 0;
             font-weight: 700;
-            color: white;
         }
         
         .logo-text p {
             font-size: 0.9rem;
             margin: 0;
             opacity: 0.9;
-            color: white;
         }
         
         .user-info {
@@ -97,7 +100,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
         
         .user-greeting {
             font-size: 1rem;
-            color: white;
         }
         
         .user-badge {
@@ -108,11 +110,10 @@ $current_page = basename($_SERVER['PHP_SELF']);
             display: flex;
             align-items: center;
             gap: 5px;
-            color: white;
         }
         
         .logout-btn {
-            background-color: #000000;
+            background-color: #1976d2;
             color: white;
             border: none;
             padding: 8px 15px;
@@ -127,17 +128,23 @@ $current_page = basename($_SERVER['PHP_SELF']);
         }
         
         .logout-btn:hover {
-            background-color: #333333;
+            background-color: #0d47a1;
         }
         
+       
         .main-nav {
-            background-color: #0284c7;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            background-color: rgba(0, 0, 0, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            align-items: center;
+            align-content: center;
+            justify-content: center;
         }
         
         .nav-container {
             max-width: 1200px;
             margin: 0 auto;
+            align-items: center;
+            justify-content: flex-end;
             padding: 0 20px;
         }
         
@@ -163,13 +170,13 @@ $current_page = basename($_SERVER['PHP_SELF']);
         }
         
         .nav-link:hover {
-            background-color: rgba(255, 255, 255, 0.2);
-            border-bottom-color: #000000;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-bottom-color: #0077cc;
         }
         
         .nav-link.active {
-            background-color: rgba(255, 255, 255, 0.3);
-            border-bottom-color: #000000;
+            background-color: rgba(255, 255, 255, 0.15);
+            border-bottom-color: #0077cc;
             font-weight: 600;
         }
         
@@ -178,6 +185,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             width: 20px;
             text-align: center;
         }
+        
         
         .mobile-menu-toggle {
             display: none;
@@ -188,6 +196,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             cursor: pointer;
             padding: 10px;
         }
+        
         
         @media (max-width: 768px) {
             .header-top {
@@ -205,7 +214,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 position: absolute;
                 top: 100%;
                 left: 0;
-                background-color: #0ea5e9;
+                background-color: #0077cc;
                 box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             }
             
@@ -215,7 +224,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             
             .nav-link {
                 padding: 12px 20px;
-                border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             }
             
             .user-info {
@@ -225,10 +234,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
             }
         }
         
+       
         .breadcrumb {
-            background-color: #f8fafc;
+            background-color: #f8f9fa;
             padding: 10px 0;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e9ecef;
         }
         
         .breadcrumb-container {
@@ -252,7 +262,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
         }
         
         .breadcrumb-item a {
-            color: #0ea5e9;
+            color: #0077cc;
             text-decoration: none;
         }
         
@@ -262,14 +272,15 @@ $current_page = basename($_SERVER['PHP_SELF']);
         
         .breadcrumb-separator {
             margin: 0 10px;
-            color: #64748b;
+            color: #7f8c8d;
         }
         
         .breadcrumb-item.active {
-            color: #000000;
+            color: #2c3e50;
             font-weight: 500;
         }
         
+    
         .alert-container {
             max-width: 1200px;
             margin: 0 auto;
@@ -284,76 +295,75 @@ $current_page = basename($_SERVER['PHP_SELF']);
         }
         
         .alert-success {
-            background-color: #f0f9ff;
-            color: #000000;
-            border-color: #0ea5e9;
+            background-color: #e8f4ff;
+            color: #005599;
+            border-color: #d0e8ff;
         }
         
         .alert-error {
-            background-color: #fef2f2;
-            color: #000000;
-            border-color: #ef4444;
+            background-color: #e3f2fd;
+            color: #0d47a1;
+            border-color: #bbdefb;
         }
         
         .alert-warning {
-            background-color: #fffbeb;
-            color: #000000;
-            border-color: #f59e0b;
+            background-color: #e8f4ff;
+            color: #005599;
+            border-color: #d0e8ff;
         }
         
         .alert-info {
-            background-color: #f0f9ff;
-            color: #000000;
-            border-color: #0ea5e9;
+            background-color: #e8f4ff;
+            color: #005599;
+            border-color: #d0e8ff;
         }
     </style>
 </head>
 <body>
+   
     <header class="main-header">
-        <div class="header-container">
+        <div class="">
             <div class="header-top">
+               
                 <a href="<?php echo isLoggedIn() ? getDashboardUrl($current_role) : '../index.php'; ?>" class="logo">
                     <div class="logo-icon">
                         <i class="fas fa-shield-virus"></i>
                     </div>
                     <div class="logo-text">
-                        <h1>Community Surveillance System</h1>
-                        <p>Protecting Community Health</p>
+                        <h1><?php echo t('system_title'); ?></h1>
+                        <p><?php echo t('system_subtitle'); ?></p>
                     </div>
                 </a>
                 
+               
                 <button class="mobile-menu-toggle" id="mobileMenuToggle">
                     <i class="fas fa-bars"></i>
                 </button>
-                
-                <div class="user-info">
-                    <div class="user-greeting">
-                        Welcome, <strong><?php echo htmlspecialchars($username); ?></strong>
-                    </div>
-                    
-                    <?php if (isLoggedIn()): ?>
-                        <div class="user-badge">
-                            <i class="fas fa-user-md"></i>
-                            <?php echo getRoleBadge($current_role); ?>
-                        </div>
+              
+                   
+                    <div class="language-switcher" style="display: flex; align-items: center; gap: 5px; margin-left: 15px;">
+                        <?php
                         
-                        <a href="../auth/logout.php" class="logout-btn">
-                            <i class="fas fa-sign-out-alt"></i>
-                            Logout
+                        $currentLang = $_SESSION['user_lang'] ?? $_COOKIE['user_lang'] ?? 'en';
+                        ?>
+                        <a href="?lang=en" class="lang-btn <?php echo $currentLang === 'en' ? 'active' : ''; ?>" 
+                           style="padding: 5px 10px; border-radius: 4px; text-decoration: none; color: #fff; background: <?php echo $currentLang === 'en' ? 'rgba(255,255,255,0.3)' : 'transparent'; ?>; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.3);">
+                            EN
                         </a>
-                    <?php else: ?>
-                        <a href="../auth/login.php" class="logout-btn" style="background-color: #000000;">
-                            <i class="fas fa-sign-in-alt"></i>
-                            Login
+                        <a href="?lang=sw" class="lang-btn <?php echo $currentLang === 'sw' ? 'active' : ''; ?>"
+                           style="padding: 5px 10px; border-radius: 4px; text-decoration: none; color: #fff; background: <?php echo $currentLang === 'sw' ? 'rgba(255,255,255,0.3)' : 'transparent'; ?>; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.3);">
+                            SW
                         </a>
-                    <?php endif; ?>
+                    </div>
                 </div>
             </div>
             
+           
             <nav class="main-nav">
                 <div class="nav-container">
-                    <ul class="nav-menu" id="navMenu">
+                <ul class="nav-menu" id="navMenu">
                         <?php if (!isLoggedIn()): ?>
+                           
                             <li class="nav-item">
                                 <a href="../index.php" class="nav-link <?php echo $current_page == 'index.php' ? 'active' : ''; ?>">
                                     <i class="fas fa-home"></i> Home
@@ -376,6 +386,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                             </li>
                             
                         <?php elseif ($current_role == 'citizen'): ?>
+                           
                             <li class="nav-item">
                                 <a href="../citizen/dashboard.php" class="nav-link <?php echo $current_page == 'dashboard.php' ? 'active' : ''; ?>">
                                     <i class="fas fa-home"></i> Dashboard
@@ -401,8 +412,14 @@ $current_page = basename($_SERVER['PHP_SELF']);
                                     <i class="fas fa-chart-bar"></i> Public Dashboard
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a href="../public/heatmap.php" class="nav-link <?php echo $current_page == 'heatmap.php' ? 'active' : ''; ?>">
+                                    <i class="fas fa-map-marked-alt"></i> Map
+                                </a>
+                            </li>
                             
                         <?php elseif ($current_role == 'health_worker'): ?>
+                           
                             <li class="nav-item">
                                 <a href="../health_worker/dashboard.php" class="nav-link <?php echo $current_page == 'dashboard.php' ? 'active' : ''; ?>">
                                     <i class="fas fa-home"></i> Dashboard
@@ -424,12 +441,28 @@ $current_page = basename($_SERVER['PHP_SELF']);
                                 </a>
                             </li>
                             <li class="nav-item">
+                                <a href="../health_worker/outbreak_tracking.php" class="nav-link <?php echo $current_page == 'outbreak_tracking.php' ? 'active' : ''; ?>">
+                                    <i class="fas fa-exclamation-triangle"></i> Outbreaks
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../public/heatmap.php" class="nav-link <?php echo $current_page == 'heatmap.php' ? 'active' : ''; ?>">
+                                    <i class="fas fa-map-marked-alt"></i> Map
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a href="../public/public_dashboard.php" class="nav-link <?php echo $current_page == 'public_dashboard.php' ? 'active' : ''; ?>">
                                     <i class="fas fa-chart-bar"></i> Public Dashboard
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a href="../public/heatmap.php" class="nav-link <?php echo $current_page == 'heatmap.php' ? 'active' : ''; ?>">
+                                    <i class="fas fa-map-marked-alt"></i> Map
+                                </a>
+                            </li>
                             
                         <?php elseif ($current_role == 'admin'): ?>
+                           
                             <li class="nav-item">
                                 <a href="../admin/dashboard.php" class="nav-link <?php echo $current_page == 'dashboard.php' ? 'active' : ''; ?>">
                                     <i class="fas fa-home"></i> Dashboard
@@ -456,12 +489,43 @@ $current_page = basename($_SERVER['PHP_SELF']);
                                 </a>
                             </li>
                             <li class="nav-item">
+                                <a href="../admin/sms_management.php" class="nav-link <?php echo $current_page == 'sms_management.php' ? 'active' : ''; ?>">
+                                    <i class="fas fa-sms"></i> SMS Management
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../admin/export_reports.php" class="nav-link <?php echo $current_page == 'export_reports.php' ? 'active' : ''; ?>">
+                                    <i class="fas fa-file-export"></i> Export Reports
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../admin/activity_logs.php" class="nav-link <?php echo $current_page == 'activity_logs.php' ? 'active' : ''; ?>">
+                                    <i class="fas fa-history"></i> Activity Logs
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../api/sms_tables.php" class="nav-link" target="_blank">
+                                    <i class="fas fa-database"></i> Setup SMS Tables
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../api/activity_tables.php" class="nav-link" target="_blank">
+                                    <i class="fas fa-database"></i> Setup Activity Tables
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a href="../public/public_dashboard.php" class="nav-link <?php echo $current_page == 'public_dashboard.php' ? 'active' : ''; ?>">
                                     <i class="fas fa-chart-bar"></i> Public Dashboard
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a href="../public/heatmap.php" class="nav-link <?php echo $current_page == 'heatmap.php' ? 'active' : ''; ?>">
+                                    <i class="fas fa-map-marked-alt"></i> Map
+                                </a>
+                            </li>
                         <?php endif; ?>
                         
+                       
                         <?php if (isLoggedIn()): ?>
                             <li class="nav-item">
                                 <a href="../auth/logout.php" class="nav-link">
@@ -469,12 +533,12 @@ $current_page = basename($_SERVER['PHP_SELF']);
                                 </a>
                             </li>
                         <?php endif; ?>
-                    </ul>
+                    </ul></center>
                 </div>
             </nav>
         </div>
     </header>
-    
+   
     <div class="breadcrumb">
         <div class="breadcrumb-container">
             <ul class="breadcrumb-list">
@@ -484,6 +548,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                     </a>
                 </li>
                 <?php
+                
                 $breadcrumbs = [];
                 
                 switch ($current_page) {
@@ -542,6 +607,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         break;
                 }
                 
+                
                 foreach ($breadcrumbs as $index => $crumb) {
                     if ($index > 0) {
                         echo '<li class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></li>';
@@ -558,8 +624,10 @@ $current_page = basename($_SERVER['PHP_SELF']);
         </div>
     </div>
     
+   
     <div class="alert-container">
         <?php
+        
         if (isset($_SESSION['success_message'])) {
             echo '<div class="alert alert-success">' . htmlspecialchars($_SESSION['success_message']) . '</div>';
             unset($_SESSION['success_message']);
@@ -580,6 +648,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
             unset($_SESSION['info_message']);
         }
         
+       
         if (isset($_GET['success'])) {
             echo '<div class="alert alert-success">' . htmlspecialchars(urldecode($_GET['success'])) . '</div>';
         }
@@ -598,6 +667,24 @@ $current_page = basename($_SERVER['PHP_SELF']);
         ?>
     </div>
     
-    <div class="container"></div>
-</body>
-</html>
+    
+    <main class="main-content">
+        </main>
+
+        <script>
+            
+            document.getElementById('mobileMenuToggle').addEventListener('click', function() {
+                const navMenu = document.getElementById('navMenu');
+                navMenu.classList.toggle('show');
+            });
+
+            
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function() {
+                    document.getElementById('navMenu').classList.remove('show');
+                });
+            });
+        </script>
+    </body>
+    </html>
+      

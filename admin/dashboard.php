@@ -9,6 +9,29 @@ $user_id = $user['id'];
 
 $db = getDB();
 
+
+try {
+    $stmt = $db->prepare("SELECT username, email, created_at, preferred_language FROM users WHERE id = ?");
+    $stmt->execute([$user_id]);
+    $user_details = $stmt->fetch();
+    
+    if (!$user_details) {
+        $user_details = [
+            'username' => $user['username'],
+            'email' => '',
+            'created_at' => null,
+            'preferred_language' => 'en'
+        ];
+    }
+} catch(PDOException $e) {
+    $user_details = [
+        'username' => $user['username'],
+        'email' => '',
+        'created_at' => null,
+        'preferred_language' => 'en'
+    ];
+}
+
 try {
     $stmt = $db->prepare("SELECT COUNT(*) as total_users FROM users");
     $stmt->execute();
@@ -83,6 +106,25 @@ try {
     $stmt->execute();
     $recent_visualizations = $stmt->fetchAll();
     
+    
+    $stmt = $db->prepare("SELECT COUNT(*) as active_outbreaks FROM outbreaks WHERE status = 'active'");
+    $stmt->execute();
+    $active_outbreaks = $stmt->fetch()['active_outbreaks'];
+    
+    $stmt = $db->prepare("SELECT o.*, l.location_name, l.latitude, l.longitude 
+                         FROM outbreaks o 
+                         LEFT JOIN locations l ON o.location_id = l.location_id 
+                         WHERE o.status IN ('active', 'investigating')
+                         ORDER BY o.alert_date DESC
+                         LIMIT 5");
+    $stmt->execute();
+    $recent_outbreaks = $stmt->fetchAll();
+    
+    
+    $stmt = $db->prepare("SELECT COUNT(*) as critical_reports FROM reports WHERE severity = 'critical' AND status != 'resolved'");
+    $stmt->execute();
+    $critical_reports = $stmt->fetch()['critical_reports'];
+    
 } catch(PDOException $e) {
     $_SESSION['error_message'] = "Error loading dashboard data: " . $e->getMessage();
     $total_users = $total_reports = $analyses_to_review = $total_analyses = $total_recommendations = 0;
@@ -90,6 +132,17 @@ try {
     $avg_response_time = 0;
     $recent_sent_analyses = $top_diseases = $recent_activity = $recent_visualizations = [];
     $total_visualizations = 0;
+    $active_outbreaks = 0;
+    $recent_outbreaks = [];
+    $critical_reports = 0;
+}
+
+
+function formatMemberSince($date) {
+    if (empty($date)) {
+        return 'Recently joined';
+    }
+    return formatDate($date, 'F Y');
 }
 ?>
 
@@ -101,6 +154,8 @@ try {
     <title>Admin Dashboard </title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <style>
         .dashboard-header {
             background: linear-gradient(135deg, #4da8da, #0077be);
@@ -134,17 +189,29 @@ try {
             padding: 15px 20px;
             border-radius: 8px;
             backdrop-filter: blur(10px);
+            min-width: 250px;
         }
         
         .user-info-card h3 {
-            margin-bottom: 5px;
+            margin-bottom: 10px;
             font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .user-info-card p {
-            margin: 0;
+            margin: 5px 0;
             font-size: 0.9rem;
             opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .user-info-card i {
+            width: 18px;
+            text-align: center;
         }
         
         .stats-grid {
@@ -487,7 +554,6 @@ try {
         
         .container {
             background: white;
-            min-height: 100vh;
             padding: 20px;
         }
         
@@ -513,6 +579,10 @@ try {
             .container {
                 padding: 10px;
             }
+            
+            .user-info-card {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -521,12 +591,16 @@ try {
         <div class="dashboard-header">
             <div class="welcome-message">
                 <div>
-                    <h2>Welcome, Admin <?php echo htmlspecialchars($user['username']); ?>! 👨‍💼</h2>
-                    <p>Monitor system activity, review critical cases, and manage the disease surveillance platform.</p>
+                    <h2>Welcome, Admin <?php echo htmlspecialchars($user_details['username']); ?>! 👨‍💼</h2>
+                    <p>Monitor system activity, review critical cases, and manage the community health system.</p>
                 </div>
                 <div class="user-info-card">
-                    <h3>Administrator Account</h3>
-                    <p>Member since <?php echo formatDate($user['created_at'], 'F Y'); ?></p>
+                    <h3><i class="fas fa-user-shield"></i> Administrator Account</h3>
+                    <p><i class="fas fa-calendar-alt"></i> Member since: <?php echo formatMemberSince($user_details['created_at']); ?></p>
+                    <p><i class="fas fa-envelope"></i> <?php echo htmlspecialchars($user_details['email'] ?: 'No email provided'); ?></p>
+                    <?php if (!empty($user_details['preferred_language'])): ?>
+                    <p><i class="fas fa-language"></i> Language: <?php echo strtoupper($user_details['preferred_language']); ?></p>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -566,6 +640,24 @@ try {
                 <h4>System Analytics</h4>
                 <p>View detailed system analytics and metrics</p>
                 <a href="analytics.php" class="action-btn">View Analytics</a>
+            </div>
+            
+            <div class="action-card" style="border-color: #ef4444;">
+                <div class="action-icon" style="color: #ef4444;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h4>Outbreak Tracking</h4>
+                <p>Track and manage disease outbreaks</p>
+                <a href="outbreak_tracking.php" class="action-btn" style="background: #ef4444;">View Outbreaks</a>
+            </div>
+            
+            <div class="action-card" style="border-color: #f97316;">
+                <div class="action-icon" style="color: #f97316;">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <h4>Alert Management</h4>
+                <p>Create alerts from severe reports</p>
+                <a href="alert_management.php" class="action-btn" style="background: #f97316;">Manage Alerts</a>
             </div>
         </div>
         
@@ -639,6 +731,74 @@ try {
                 <div class="stat-label">Visualizations</div>
                 <div class="stat-subtext">
                     Data charts created
+                </div>
+            </div>
+            
+            <div class="stat-card" style="border-top-color: #ef4444;">
+                <div class="stat-icon" style="color: #ef4444;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-number" style="color: #ef4444;"><?php echo $active_outbreaks; ?></div>
+                <div class="stat-label">Active Outbreaks</div>
+                <div class="stat-subtext">
+                    <?php echo $critical_reports; ?> critical reports
+                </div>
+            </div>
+        </div>
+        
+        <!-- Disease & Outbreak Map -->
+        <div class="dashboard-section" style="margin-bottom: 30px;">
+            <div class="section-header">
+                <h3><i class="fas fa-map-marked-alt" style="color: #4da8da;"></i> Disease & Outbreak Map</h3>
+                <a href="outbreak_tracking.php" class="view-all-link">View Outbreak Tracking →</a>
+            </div>
+            <p style="color: #666; margin-bottom: 15px;">Geographic distribution of disease reports and active outbreaks across Kenya</p>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <select id="diseaseFilter" style="padding: 8px; border: 1px solid #4da8da; border-radius: 4px; background: white; color: #333;">
+                    <option value="all">All Diseases</option>
+                    <option value="cholera">Cholera</option>
+                    <option value="malaria">Malaria</option>
+                    <option value="typhoid">Typhoid</option>
+                    <option value="dengue">Dengue</option>
+                    <option value="covid">COVID-19</option>
+                </select>
+                <select id="dateFilter" style="padding: 8px; border: 1px solid #4da8da; border-radius: 4px; background: white; color: #333;">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="365">Last Year</option>
+                </select>
+                <button onclick="updateAdminMap()" style="padding: 8px 15px; background: #4da8da; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    <i class="fas fa-sync-alt"></i> Update
+                </button>
+            </div>
+            
+            <div id="adminMap" style="height: 400px; width: 100%; border-radius: 8px; border: 2px solid #4da8da;">
+                <div style="height: 100%; display: flex; align-items: center; justify-content: center; background: #f0f9ff; color: #4da8da;">
+                    <div style="text-align: center;">
+                        <i class="fas fa-map-marked-alt" style="font-size: 48px; margin-bottom: 15px;"></i>
+                        <p>Loading map...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 20px; margin-top: 15px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 20px; height: 20px; background: rgba(77, 168, 218, 0.3); border-radius: 50%;"></div>
+                    <span style="color: #666;">Low Activity</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 20px; height: 20px; background: rgba(77, 168, 218, 0.6); border-radius: 50%;"></div>
+                    <span style="color: #666;">Medium Activity</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 20px; height: 20px; background: rgba(77, 168, 218, 0.9); border-radius: 50%;"></div>
+                    <span style="color: #666;">High Activity</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 20px; height: 20px; background: #ef4444; border-radius: 50%;"></div>
+                    <span style="color: #666;">Outbreak Alert</span>
                 </div>
             </div>
         </div>
@@ -964,6 +1124,130 @@ try {
                 });
             }
         });
+        
+        // Disease Map JavaScript
+        var adminMap = null;
+        var adminMarkersLayer = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initAdminMap();
+        });
+        
+        function initAdminMap() {
+            var mapElement = document.getElementById('adminMap');
+            if (mapElement && typeof L !== 'undefined') {
+                try {
+                    adminMap = L.map('adminMap', {
+                        center: [-1.2864, 36.8172],
+                        zoom: 6,
+                        zoomControl: true,
+                        attributionControl: true
+                    });
+                    
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    }).addTo(adminMap);
+                    
+                    updateAdminMap();
+                } catch (e) {
+                    console.error('Error initializing map:', e);
+                }
+            }
+        }
+        
+        function updateAdminMap() {
+            if (!adminMap) return;
+            
+            var disease = document.getElementById('diseaseFilter').value;
+            var days = document.getElementById('dateFilter').value;
+            
+            fetch(`../public/api/get_heatmap_data.php?disease=${disease}&days=${days}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (adminMarkersLayer) {
+                        adminMap.removeLayer(adminMarkersLayer);
+                        adminMarkersLayer = null;
+                    }
+                    
+                    if (data.points && data.points.length > 0) {
+                        adminMarkersLayer = L.layerGroup().addTo(adminMap);
+                        
+                        data.points.forEach(function(p) {
+                            var color = p.intensity > 2 ? '#dc2626' : (p.intensity > 1 ? '#f97316' : '#4da8da');
+                            var radius = Math.min(p.intensity * 3, 20);
+                            
+                            var marker = L.circleMarker([p.lat, p.lng], {
+                                radius: radius,
+                                fillColor: color,
+                                color: '#ffffff',
+                                weight: 2,
+                                opacity: 1,
+                                fillOpacity: 0.7
+                            });
+                            var popupContent = '<strong>Disease: ' + (p.disease || 'Unknown') + '</strong><br>';
+                            popupContent += 'Cases: ' + p.intensity + '<br>';
+                            if (p.severity) popupContent += 'Severity: ' + p.severity + '<br>';
+                            if (p.location) popupContent += 'Location: ' + p.location + '<br>';
+                            popupContent += 'Lat: ' + p.lat.toFixed(4) + ', Lng: ' + p.lng.toFixed(4);
+                            marker.bindPopup(popupContent);
+                            adminMarkersLayer.addLayer(marker);
+                        });
+                    }
+                    
+                    // Display outbreaks
+                    if (data.outbreaks && data.outbreaks.length > 0) {
+                        if (!adminMarkersLayer) {
+                            adminMarkersLayer = L.layerGroup().addTo(adminMap);
+                        }
+                        data.outbreaks.forEach(function(o) {
+                            var affectedArea = L.circle([o.lat, o.lng], {
+                                radius: o.radius * 1000,
+                                fillColor: '#ef4444',
+                                fillOpacity: 0.15,
+                                color: '#ef4444',
+                                weight: 2,
+                                opacity: 0.6
+                            }).addTo(adminMap);
+                            
+                            affectedArea.bindPopup('<div style="min-width:150px;">' +
+                                '<strong style="color:#ef4444;">OUTBREAK ALERT</strong><hr>' +
+                                '<strong>Disease:</strong> ' + o.disease + '<br>' +
+                                '<strong>Location:</strong> ' + (o.location || 'Unknown') + '<br>' +
+                                '<strong>Affected Radius:</strong> ' + o.radius + ' km<br>' +
+                                '<strong>Confirmed Cases:</strong> ' + o.cases_confirmed + '<br>' +
+                                '<strong>Alert Date:</strong> ' + o.alert_date + '</div>');
+                            
+                            var centerMarker = L.circleMarker([o.lat, o.lng], {
+                                radius: 8,
+                                fillColor: '#ef4444',
+                                color: '#ffffff',
+                                weight: 2,
+                                opacity: 1,
+                                fillOpacity: 0.9
+                            }).addTo(adminMap);
+                            
+                            centerMarker.bindPopup('<div style="min-width:150px;">' +
+                                '<strong style="color:#ef4444;">Outbreak Center</strong><hr>' +
+                                '<strong>Disease:</strong> ' + o.disease + '<br>' +
+                                '<strong>Location:</strong> ' + (o.location || 'Unknown') + '</div>');
+                        });
+                    }
+                    
+                    // Fit bounds
+                    var allMarkers = [];
+                    if (data.points) {
+                        data.points.forEach(function(p) { allMarkers.push([p.lat, p.lng]); });
+                    }
+                    if (data.outbreaks) {
+                        data.outbreaks.forEach(function(o) { allMarkers.push([o.lat, o.lng]); });
+                    }
+                    if (allMarkers.length > 0) {
+                        var bounds = L.latLngBounds(allMarkers);
+                        adminMap.fitBounds(bounds, {padding: [50, 50]});
+                    }
+                });
+        }
     </script>
 </body>
 </html>

@@ -3,6 +3,18 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'sw'])) {
+    $_SESSION['user_lang'] = $_GET['lang'];
+    setcookie('user_lang', $_GET['lang'], time() + (86400 * 30), '/');
+    
+    $redirectUrl = str_replace(['?lang=en', '?lang=sw', '&lang=en', '&lang=sw'], '', $_SERVER['REQUEST_URI']);
+    header('Location: ' . ($redirectUrl ?: 'index.php'));
+    exit;
+}
+
+
+require_once 'includes/init_translations.php';
+
 $is_logged_in = isset($_SESSION['user_id']);
 $user_role = isset($_SESSION['role']) ? htmlspecialchars($_SESSION['role']) : null;
 
@@ -26,7 +38,7 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Community Health Monitoring & Early Warning System">
-    <meta name="keywords" content="disease, surveillance, health, reporting, analytics">
+    <meta name="keywords" content="community, health, reporting, analytics">
     <title>CHMEWS</title>
     
     <link rel="stylesheet" href="assets/css/style.css">
@@ -122,32 +134,60 @@ try {
             background: #dc2626;
         }
 
-        .hero-wrapper {
-            background: linear-gradient(135deg, #e0f2fe 0%, #ffffff 50%, #f0f9ff 100%);
-            padding: 60px 40px;
-            position: relative;
-            overflow: hidden;
-        }
+.hero-wrapper {
+    position: relative;
+    height: 100vh;
+    padding: 60px 40px;
+
+    background-image: url('images/lab.jpg');
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+}
+
+
+.hero-wrapper::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(224, 242, 254, 0.75),
+        rgba(255, 255, 255, 0.6),
+        rgba(240, 249, 255, 0.75)
+    );
+    z-index: 1;
+}
+
+
+.hero-wrapper > * {
+    position: relative;
+    z-index: 2;
+}
 
         .hero-content h1 {
-            font-size: 2.8rem;
+            font-size: 4.8rem;
             font-weight: 900;
             margin-bottom: 10px;
-            color: #0f172a;
+            color: #000;
             line-height: 1.2;
         }
 
         .hero-content .subtitle {
-            font-size: 1.2rem;
+            font-size: 2.2rem;
             margin-bottom: 8px;
-            color: #475569;
+            color: #000;
             font-weight: 500;
         }
 
         .hero-content p {
-            font-size: 0.95rem;
+            font-size: 1.4rem;
             margin-bottom: 25px;
-            color: #64748b;
+            color: #0c0c0c;
             max-width: 700px;
         }
 
@@ -524,17 +564,17 @@ try {
         <div class="nav-content">
             <a href="index.php" class="nav-logo">
                 <i class="fas fa-hospital"></i>
-                <span>Disease Surveillance</span>
+                <span><?php echo t('system_title'); ?></span>
             </a>
             <div class="user-menu">
                 <?php if ($user_role === 'citizen'): ?>
-                    <a href="citizen/dashboard.php" class="btn-nav btn-nav-primary">Go to Dashboard</a>
+                    <a href="citizen/dashboard.php" class="btn-nav btn-nav-primary"><?php echo t('go_to_dashboard'); ?></a>
                 <?php elseif ($user_role === 'health_worker'): ?>
-                    <a href="health_worker/dashboard.php" class="btn-nav btn-nav-primary">Go to Dashboard</a>
+                    <a href="health_worker/dashboard.php" class="btn-nav btn-nav-primary"><?php echo t('go_to_dashboard'); ?></a>
                 <?php elseif ($user_role === 'admin'): ?>
-                    <a href="admin/dashboard.php" class="btn-nav btn-nav-primary">Go to Dashboard</a>
+                    <a href="admin/dashboard.php" class="btn-nav btn-nav-primary"><?php echo t('go_to_dashboard'); ?></a>
                 <?php endif; ?>
-                <a href="auth/logout.php" class="btn-nav btn-nav-danger">Logout</a>
+                <a href="auth/logout.php" class="btn-nav btn-nav-danger"><?php echo t('logout'); ?></a>
             </div>
         </div>
     </nav>
@@ -542,50 +582,63 @@ try {
 
     <div class="hero-wrapper">
         <div class="hero-content">
-            <h1>Community Health Monitoring & Early Warning System</h1>
-            <p class="subtitle">Real-time Intelligence for Public Health</p>
-            <p>Monitor, analyze, and visualize disease trends with advanced analytics and real-time reporting capabilities</p>
+            <h1><?php echo t('system_title'); ?></h1>
+            <p class="subtitle"><?php echo t('system_subtitle'); ?></p>
+            <p><?php echo t('monitor_analyze'); ?></p>
             
             <div class="hero-badges">
                 <div class="badge-item">
                     <i class="fas fa-bolt"></i>
-                    <span>Real-time Updates</span>
+                    <span><?php echo t('real_time_updates'); ?></span>
                 </div>
                 <div class="badge-item">
                     <i class="fas fa-chart-line"></i>
-                    <span>Advanced Analytics</span>
+                    <span><?php echo t('advanced_analytics'); ?></span>
                 </div>
                 <div class="badge-item">
                     <i class="fas fa-lock"></i>
-                    <span>Bank-Grade Security</span>
+                    <span><?php echo t('bank_grade_security'); ?></span>
                 </div>
                 <div class="badge-item">
                     <i class="fas fa-mobile-alt"></i>
-                    <span>Mobile Responsive</span>
+                    <span><?php echo t('mobile_responsive'); ?></span>
                 </div>
+            </div>
+
+          
+            <div class="language-switcher" style="display: flex; justify-content: center; gap: 10px; margin: 20px 0;">
+                <?php $currentLang = $_SESSION['user_lang'] ?? $_COOKIE['user_lang'] ?? 'en'; ?>
+                <a href="?lang=en" class="lang-btn <?php echo $currentLang === 'en' ? 'active' : ''; ?>" 
+                   style="padding: 8px 16px; border-radius: 4px; text-decoration: none; color: #0ea5e9; background: <?php echo $currentLang === 'en' ? '#0ea5e9' : 'transparent'; ?>; font-size: 0.9rem; border: 2px solid #0ea5e9;">
+                    <strong>EN</strong>
+                </a>
+                <a href="?lang=sw" class="lang-btn <?php echo $currentLang === 'sw' ? 'active' : ''; ?>"
+                   style="padding: 8px 16px; border-radius: 4px; text-decoration: none; color: #0ea5e9; background: <?php echo $currentLang === 'sw' ? '#0ea5e9' : 'transparent'; ?>; font-size: 0.9rem; border: 2px solid #0ea5e9;">
+                    <strong>SW</strong>
+                </a>
             </div>
 
             <?php if (!$is_logged_in): ?>
             <div class="hero-buttons">
                 <a href="auth/login.php" class="btn-hero btn-hero-primary">
                     <i class="fas fa-sign-in-alt"></i>
-                    <span>Login Now</span>
+                    <span><?php echo t('login_now'); ?></span>
                 </a>
                 <a href="auth/register.php" class="btn-hero btn-hero-secondary">
                     <i class="fas fa-user-plus"></i>
-                    <span>Create Account</span>
+                    <span><?php echo t('create_account'); ?></span>
                 </a>
                 <a href="public/public_dashboard.php" class="btn-hero btn-hero-tertiary">
                     <i class="fas fa-chart-bar"></i>
-                    <span>Public Dashboard</span>
+                    <span><?php echo t('public_dashboard'); ?></span>
                 </a>
             </div>
             <?php else: ?>
             <div class="quick-nav">
                 <?php if ($user_role === 'citizen'): ?>
-                    <a href="citizen/create_report.php"><i class="fas fa-file-medical"></i> Create Report</a>
-                    <a href="citizen/view_reports.php"><i class="fas fa-list"></i> My Reports</a>
-                    <a href="citizen/view_recommendations.php"><i class="fas fa-lightbulb"></i> Recommendations</a>
+                    <a href="citizen/create_report.php"><i class="fas fa-file-medical"></i> <?php echo t('create_report'); ?></a>
+                    <a href="citizen/view_reports.php"><i class="fas fa-list"></i> <?php echo t('my_reports'); ?></a>
+                    <a href="citizen/view_recommendations.php"><i class="fas fa-lightbulb"></i> <?php echo t('view_recommendations'); ?></a>
                 <?php elseif ($user_role === 'health_worker'): ?>
                     <a href="health_worker/view_reports.php"><i class="fas fa-inbox"></i> Reports Queue</a>
                     <a href="health_worker/analyze_report.php"><i class="fas fa-stethoscope"></i> Analyze</a>
@@ -614,36 +667,36 @@ try {
                 <div class="col-lg-2 col-md-4 col-sm-6">
                     <div class="stat-card">
                         <div class="stat-icon"><i class="fas fa-tachometer-alt"></i></div>
-                        <div class="stat-number">Real-time</div>
-                        <div class="stat-label">Data Processing</div>
+                        <div class="stat-number"><?php echo t('real_time'); ?></div>
+                        <div class="stat-label"><?php echo t('data_processing'); ?></div>
                     </div>
                 </div>
                 <div class="col-lg-2 col-md-4 col-sm-6">
                     <div class="stat-card">
                         <div class="stat-icon"><i class="fas fa-shield-alt"></i></div>
                         <div class="stat-number">100%</div>
-                        <div class="stat-label">Encrypted Security</div>
+                        <div class="stat-label"><?php echo t('encrypted_security'); ?></div>
                     </div>
                 </div>
                 <div class="col-lg-2 col-md-4 col-sm-6">
                     <div class="stat-card">
                         <div class="stat-icon"><i class="fas fa-clock"></i></div>
                         <div class="stat-number">24/7</div>
-                        <div class="stat-label">Monitoring</div>
+                        <div class="stat-label"><?php echo t('monitoring'); ?></div>
                     </div>
                 </div>
                 <div class="col-lg-2 col-md-4 col-sm-6">
                     <div class="stat-card">
                         <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
                         <div class="stat-number">AI</div>
-                        <div class="stat-label">Analytics</div>
+                        <div class="stat-label"><?php echo t('analytics'); ?></div>
                     </div>
                 </div>
                 <div class="col-lg-2 col-md-4 col-sm-6">
                     <div class="stat-card">
                         <div class="stat-icon"><i class="fas fa-globe"></i></div>
-                        <div class="stat-number">Global</div>
-                        <div class="stat-label">Coverage</div>
+                        <div class="stat-number"><?php echo t('global'); ?></div>
+                        <div class="stat-label"><?php echo t('coverage'); ?></div>
                     </div>
                 </div>
             </div>
@@ -655,68 +708,68 @@ try {
     <section class="roles-section">
         <div class="container-fluid px-4 py-5">
             <div class="section-header mb-5">
-                <h2>How It Works</h2>
-                <p>Choose your role and join our community of healthcare professionals</p>
+                <h2><?php echo t('how_it_works'); ?></h2>
+                <p><?php echo t('choose_role_desc'); ?></p>
             </div>
 
             <div class="row g-4">
                 <div class="col-lg-6 col-xl-3">
                     <div class="role-card citizen h-100">
                         <div class="role-icon"><i class="fas fa-user-md"></i></div>
-                        <h3>Citizens</h3>
-                        <p>Report health concerns and stay informed about disease trends</p>
+                        <h3><?php echo t('citizens'); ?></h3>
+                        <p><?php echo t('citizen_desc'); ?></p>
                         <ul class="role-features">
-                            <li>Submit disease reports securely</li>
-                            <li>Track report status in real-time</li>
-                            <li>Receive health recommendations</li>
-                            <li>View disease statistics</li>
+                            <li><?php echo t('submit_reports'); ?></li>
+                            <li><?php echo t('track_status'); ?></li>
+                            <li><?php echo t('receive_recommendations'); ?></li>
+                            <li><?php echo t('view_statistics'); ?></li>
                         </ul>
-                        <a href="auth/register.php?role=citizen" class="btn-role">Join as Citizen</a>
+                        <a href="auth/register.php?role=citizen" class="btn-role"><?php echo t('join_as_citizen'); ?></a>
                     </div>
                 </div>
 
                 <div class="col-lg-6 col-xl-3">
                     <div class="role-card health-worker h-100">
                         <div class="role-icon"><i class="fas fa-stethoscope"></i></div>
-                        <h3>Health Workers</h3>
-                        <p>Analyze reports, assess severity levels, and provide medical guidance</p>
+                        <h3><?php echo t('health_workers'); ?></h3>
+                        <p><?php echo t('health_worker_desc'); ?></p>
                         <ul class="role-features">
-                            <li>Review and prioritize reports</li>
-                            <li>Perform medical analysis</li>
-                            <li>Create recommendations</li>
-                            <li>Escalate to administrators</li>
+                            <li><?php echo t('review_reports'); ?></li>
+                            <li><?php echo t('medical_analysis'); ?></li>
+                            <li><?php echo t('create_recommendations'); ?></li>
+                            <li><?php echo t('escalate'); ?></li>
                         </ul>
-                        <a href="auth/register.php?role=health_worker" class="btn-role">Join as Health Worker</a>
+                        <a href="auth/register.php?role=health_worker" class="btn-role"><?php echo t('join_as_health_worker'); ?></a>
                     </div>
                 </div>
 
                 <div class="col-lg-6 col-xl-3">
                     <div class="role-card admin h-100">
                         <div class="role-icon"><i class="fas fa-crown"></i></div>
-                        <h3>Administrators</h3>
-                        <p>Manage the system, create visualizations, and monitor analytics</p>
+                        <h3><?php echo t('administrators'); ?></h3>
+                        <p><?php echo t('admin_desc'); ?></p>
                         <ul class="role-features">
-                            <li>View all system analyses</li>
-                            <li>Create visualizations</li>
-                            <li>Access analytics</li>
-                            <li>Manage user accounts</li>
+                            <li><?php echo t('view_analyses'); ?></li>
+                            <li><?php echo t('create_visualizations'); ?></li>
+                            <li><?php echo t('access_analytics'); ?></li>
+                            <li><?php echo t('manage_accounts'); ?></li>
                         </ul>
-                        <a href="auth/login.php" class="btn-role">Admin Login</a>
+                        <a href="auth/login.php" class="btn-role"><?php echo t('admin_login'); ?></a>
                     </div>
                 </div>
 
                 <div class="col-lg-6 col-xl-3">
                     <div class="role-card public h-100">
                         <div class="role-icon"><i class="fas fa-globe"></i></div>
-                        <h3>Public Access</h3>
-                        <p>View anonymized disease statistics without creating an account</p>
+                        <h3><?php echo t('public_access'); ?></h3>
+                        <p><?php echo t('public_desc'); ?></p>
                         <ul class="role-features">
-                            <li>No registration required</li>
-                            <li>View live statistics</li>
-                            <li>Track disease trends</li>
-                            <li>Export data</li>
+                            <li><?php echo t('no_registration'); ?></li>
+                            <li><?php echo t('live_statistics'); ?></li>
+                            <li><?php echo t('track_trends'); ?></li>
+                            <li><?php echo t('export_data'); ?></li>
                         </ul>
-                        <a href="public/public_dashboard.php" class="btn-role">Access Dashboard</a>
+                        <a href="public/public_dashboard.php" class="btn-role"><?php echo t('access_dashboard'); ?></a>
                     </div>
                 </div>
             </div>
@@ -726,14 +779,14 @@ try {
 
     <section class="status-section">
         <div class="status-header">
-            <span>System Status</span>
+            <span><?php echo t('system_status'); ?></span>
         </div>
         <div class="status-text">
-            Database Connection: <strong><?php echo $db_connected ? '✓ Online' : '✗ Connection Error'; ?></strong>
+            Database Connection: <strong><?php echo $db_connected ? t('online') : t('connection_error'); ?></strong>
         </div>
         <?php if ($is_logged_in): ?>
             <div class="status-text" style="margin-top: 12px; color: #0ea5e9;">
-                <i class="fas fa-user-circle"></i> Logged in as <strong><?php echo ucfirst(htmlspecialchars($user_role)); ?></strong>
+                <i class="fas fa-user-circle"></i> <?php echo t('logged_in_as'); ?> <strong><?php echo ucfirst(htmlspecialchars($user_role)); ?></strong>
             </div>
         <?php endif; ?>
     </section>
@@ -741,11 +794,11 @@ try {
     <footer>
         <div style="max-width: 1400px; margin: 0 auto;">
             <p class="copyright">
-                <i class="fas fa-copyright"></i> 2026 Disease Surveillance System
+                <i class="fas fa-copyright"></i> <?php echo t('copyright'); ?>
             </p>
-            <p>Advanced Public Health Intelligence Platform</p>
+            <p><?php echo t('advanced_platform'); ?></p>
             <p class="update-time">
-                <i class="fas fa-clock"></i> Last Updated: <?php echo date('F d, Y \a\t H:i A'); ?>
+                <i class="fas fa-clock"></i> <?php echo t('last_updated'); ?>: <?php echo date('F d, Y \a\t H:i A'); ?>
             </p>
         </div>
     </footer>

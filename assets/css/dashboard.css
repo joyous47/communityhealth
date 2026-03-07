@@ -698,11 +698,11 @@
 }
 
 .stat-box-change.positive {
-    color: #51cf66;
+    color: #339af0;
 }
 
 .stat-box-change.negative {
-    color: #ff6b6b;
+    color: #1976d2;
 }
 
 @media (max-width: 1200px) {
@@ -888,15 +888,15 @@
 }
 
 .dashboard-text-success {
-    color: #51cf66;
+    color: #339af0;
 }
 
 .dashboard-text-warning {
-    color: #ff922b;
+    color: #1976d2;
 }
 
 .dashboard-text-danger {
-    color: #ff6b6b;
+    color: #0d47a1;
 }
 
 .dashboard-text-info {

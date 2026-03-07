@@ -1,6 +1,151 @@
 <?php
 require_once __DIR__ . '/../config/database.php';
 
+function isLoggedIn() {
+    return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
+}
+
+function getCurrentUserRole() {
+    return isset($_SESSION['role']) ? $_SESSION['role'] : null;
+}
+
+function getCurrentUserId() {
+    return isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
+}
+
+function getCurrentUser() {
+    if (!isLoggedIn()) {
+        return null;
+    }
+    
+    $pdo = getDB();
+    $user_id = $_SESSION['user_id'];
+    
+    try {
+        $stmt = $pdo->prepare("SELECT id, username, email, role, created_at FROM users WHERE id = ?");
+        $stmt->execute([$user_id]);
+        return $stmt->fetch();
+    } catch (PDOException $e) {
+        return null;
+    }
+}
+
+function generateCSRFToken() {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    if (!isset($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    
+    return $_SESSION['csrf_token'];
+}
+
+function verifyCSRFToken($token) {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+}
+
+function getDB() {
+    static $pdo = null;
+    
+    if ($pdo === null) {
+        require_once __DIR__ . '/../config/database.php';
+        $database = new Database();
+        $pdo = $database->getConnection();
+    }
+    
+    return $pdo;
+}
+
+function loginUser($email, $password) {
+    $pdo = getDB();
+    
+    if (!$pdo) {
+        return [false, "Database connection failed.", null];
+    }
+    
+    try {
+        $stmt = $pdo->prepare("SELECT id, username, email, password, role FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch();
+        
+        if ($user && password_verify($password, $user['password'])) {
+            return [true, "Login successful!", $user];
+        } else {
+            return [false, "Invalid email or password.", null];
+        }
+    } catch (PDOException $e) {
+        return [false, "An error occurred. Please try again.", null];
+    }
+}
+
+function registerUser($username, $email, $password, $role = 'citizen') {
+    $pdo = getDB();
+    
+    if (!$pdo) {
+        return [false, "Database connection failed.", null];
+    }
+    
+    try {
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        
+        if ($stmt->fetch()) {
+            return [false, "Email already registered.", null];
+        }
+        
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
+        $stmt->execute([$username]);
+        
+        if ($stmt->fetch()) {
+            return [false, "Username already taken.", null];
+        }
+        
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare("INSERT INTO users (username, email, password, role, created_at) VALUES (?, ?, ?, ?, NOW())");
+        $stmt->execute([$username, $email, $hashed_password, $role]);
+        
+        $user_id = $pdo->lastInsertId();
+        return [true, "Registration successful!", $user_id];
+        
+    } catch (PDOException $e) {
+        return [false, "An error occurred. Please try again.", null];
+    }
+}
+
+function requireRole($required_role, $redirect_url = null) {
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    
+    if (!isLoggedIn()) {
+        if ($redirect_url) {
+            header('Location: ' . $redirect_url);
+            exit();
+        } else {
+            header('Location: ../auth/login.php');
+            exit();
+        }
+    }
+    
+    $current_role = getCurrentUserRole();
+    
+    if ($current_role !== $required_role) {
+        if ($redirect_url) {
+            header('Location: ' . $redirect_url);
+            exit();
+        } else {
+            header('Location: ../index.php?error=unauthorized');
+            exit();
+        }
+    }
+}
+
 function formatDate($date, $format = 'F j, Y, g:i a') {
     if (empty($date)) return 'N/A';
     $timestamp = strtotime($date);
@@ -37,42 +182,42 @@ function timeAgo($date) {
 
 function getSeverityBadge($severity) {
     $colors = [
-        'low' => 'badge-lightblue',
-        'medium' => 'badge-lightblue',
-        'high' => 'badge-lightblue',
-        'critical' => 'badge-lightblue'
+        'low' => 'success',
+        'medium' => 'warning',
+        'high' => 'danger',
+        'critical' => 'dark'
     ];
     
-    $color = $colors[strtolower($severity)] ?? 'badge-lightblue';
+    $color = $colors[strtolower($severity)] ?? 'secondary';
     $text = ucfirst($severity);
     
-    return '<span class="badge ' . $color . '">' . htmlspecialchars($text) . '</span>';
+    return '<span class="badge badge-' . $color . '">' . htmlspecialchars($text) . '</span>';
 }
 
 function getStatusBadge($status) {
     $colors = [
-        'pending' => 'badge-lightblue',
-        'analyzed' => 'badge-lightblue',
-        'completed' => 'badge-lightblue'
+        'pending' => 'warning',
+        'analyzed' => 'info',
+        'completed' => 'success'
     ];
     
-    $color = $colors[strtolower($status)] ?? 'badge-lightblue';
+    $color = $colors[strtolower($status)] ?? 'secondary';
     $text = ucfirst($status);
     
-    return '<span class="badge ' . $color . '">' . htmlspecialchars($text) . '</span>';
+    return '<span class="badge badge-' . $color . '">' . htmlspecialchars($text) . '</span>';
 }
 
 function getRoleBadge($role) {
     $colors = [
-        'citizen' => 'badge-lightblue',
-        'health_worker' => 'badge-lightblue',
-        'admin' => 'badge-lightblue'
+        'citizen' => 'primary',
+        'health_worker' => 'info',
+        'admin' => 'success'
     ];
     
-    $color = $colors[strtolower($role)] ?? 'badge-lightblue';
+    $color = $colors[strtolower($role)] ?? 'secondary';
     $text = ucfirst(str_replace('_', ' ', $role));
     
-    return '<span class="badge ' . $color . '">' . htmlspecialchars($text) . '</span>';
+    return '<span class="badge badge-' . $color . '">' . htmlspecialchars($text) . '</span>';
 }
 
 function truncateText($text, $length = 100) {
@@ -84,16 +229,16 @@ function truncateText($text, $length = 100) {
 
 function getRandomColor($opacity = 1) {
     $colors = [
-        'rgba(14, 165, 233, ' . $opacity . ')',
-        'rgba(56, 189, 248, ' . $opacity . ')',
-        'rgba(125, 211, 252, ' . $opacity . ')',
-        'rgba(186, 230, 253, ' . $opacity . ')',
-        'rgba(14, 165, 233, ' . $opacity . ')',
-        'rgba(56, 189, 248, ' . $opacity . ')',
-        'rgba(125, 211, 252, ' . $opacity . ')',
-        'rgba(186, 230, 253, ' . $opacity . ')',
-        'rgba(14, 165, 233, ' . $opacity . ')',
-        'rgba(56, 189, 248, ' . $opacity . ')'
+        'rgba(255, 99, 132, ' . $opacity . ')',
+        'rgba(54, 162, 235, ' . $opacity . ')',
+        'rgba(255, 206, 86, ' . $opacity . ')',
+        'rgba(75, 192, 192, ' . $opacity . ')',
+        'rgba(153, 102, 255, ' . $opacity . ')',
+        'rgba(255, 159, 64, ' . $opacity . ')',
+        'rgba(199, 199, 199, ' . $opacity . ')',
+        'rgba(83, 102, 255, ' . $opacity . ')',
+        'rgba(40, 159, 64, ' . $opacity . ')',
+        'rgba(210, 199, 199, ' . $opacity . ')'
     ];
     return $colors[array_rand($colors)];
 }

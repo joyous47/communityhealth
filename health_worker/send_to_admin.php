@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
-        header('Location: send_to_admin.php');
+        // header('Location: send_to_admin.php');
         exit();
     }
 }

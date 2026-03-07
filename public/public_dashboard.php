@@ -1,4 +1,18 @@
 <?php
+require_once '../includes/header.php';
+
+// Handle language switch for public dashboard
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+if (isset($_GET['lang']) && in_array($_GET['lang'], ['en', 'sw'])) {
+    $_SESSION['user_lang'] = $_GET['lang'];
+    setcookie('user_lang', $_GET['lang'], time() + (86400 * 30), '/');
+    $redirectUrl = str_replace(['?lang=en', '?lang=sw', '&lang=en', '&lang=sw'], '', $_SERVER['REQUEST_URI']);
+    header('Location: ' . ($redirectUrl ?: 'public_dashboard.php'));
+    exit;
+}
+
 $db_config = [
     'host' => '127.0.0.1',
     'port' => '3306',
@@ -185,14 +199,16 @@ $resolved_percentage = $total_reports > 0 ? round(($total_resolved / $total_repo
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Public Disease Surveillance Dashboard - View disease trends and statistics">
-    <title>Public Health Dashboard</title>
+    <meta name="description" content="Public Community Health System Dashboard - View disease trends and statistics">
+    <title><?php echo t('public_dashboard'); ?></title>
     
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
     <link rel="stylesheet" href="../assets/css/charts.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     
     <style>
         body {
@@ -520,7 +536,13 @@ $resolved_percentage = $total_reports > 0 ? round(($total_resolved / $total_repo
 </head>
 <body>
     <div class="public-header">
-        <h1>🏥 Public Health Dashboard</h1>
+        <!-- Language Switcher -->
+        <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 10px;">
+            <?php $currentLang = $_SESSION['user_lang'] ?? $_COOKIE['user_lang'] ?? 'en'; ?>
+            <a href="?lang=en" style="padding: 6px 12px; border-radius: 4px; text-decoration: none; color: white; background: <?php echo $currentLang === 'en' ? 'rgba(255,255,255,0.3)' : 'transparent'; ?>; border: 1px solid rgba(255,255,255,0.5);">EN</a>
+            <a href="?lang=sw" style="padding: 6px 12px; border-radius: 4px; text-decoration: none; color: white; background: <?php echo $currentLang === 'sw' ? 'rgba(255,255,255,0.3)' : 'transparent'; ?>; border: 1px solid rgba(255,255,255,0.5);">SW</a>
+        </div>
+        <h1>🏥 <?php echo t('public_dashboard'); ?></h1>
         <p>Community Surveillance and Trend Analysis</p>
     </div>
     
@@ -532,7 +554,7 @@ $resolved_percentage = $total_reports > 0 ? round(($total_resolved / $total_repo
         <?php endif; ?>
         
         <div class="info-alert">
-            <strong>ℹ️ Public Data:</strong> This dashboard displays aggregated disease surveillance data for public health awareness. Data shown is from the last 30 days.
+            <strong>ℹ️ Public Data:</strong> This dashboard displays aggregated community health data for public health awareness. Data shown is from the last 30 days.
         </div>
         
         <div class="filter-section">
@@ -555,7 +577,7 @@ $resolved_percentage = $total_reports > 0 ? round(($total_resolved / $total_repo
                     <div>
                         <label for="disease">Disease Type:</label>
                         <select id="disease" name="disease" class="form-control">
-                            <option value="">All Diseases</option>
+                            <option value=""><?php echo t('all_diseases'); ?></option>
                             <?php if (isset($disease_list)): ?>
                                 <?php foreach ($disease_list as $disease): ?>
                                     <option value="<?php echo htmlspecialchars($disease['disease_name']); ?>" 
@@ -582,7 +604,7 @@ $resolved_percentage = $total_reports > 0 ? round(($total_resolved / $total_repo
         <div class="stats-grid-public">
             <div class="stat-card-public">
                 <div class="stat-number"><?php echo number_format($total_reports); ?></div>
-                <div class="stat-label">Total Reports</div>
+                <div class="stat-label"><?php echo t('total_reports'); ?></div>
                 <div class="stat-percentage">Period Coverage</div>
             </div>
             
@@ -624,6 +646,60 @@ $resolved_percentage = $total_reports > 0 ? round(($total_resolved / $total_repo
             <div class="stat-card-public" style="border-top-color: #10b981;">
                 <div class="stat-number" style="color: #10b981;"><?php echo $low_count; ?></div>
                 <div class="stat-label">✓ Low Severity</div>
+            </div>
+        </div>
+        
+        <!-- Disease Outbreak Map Section -->
+        <div class="chart-container" style="margin-bottom: 40px;">
+            <h3 class="chart-title"><i class="fas fa-map-marked-alt" style="color: #0ea5e9;"></i> Disease & Outbreak Map</h3>
+            <p style="color: #64748b; margin-bottom: 15px;">Geographic distribution of disease reports and active outbreaks across Kenya</p>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <select id="diseaseFilter" style="padding: 8px; border: 1px solid #0ea5e9; border-radius: 4px; background: white; color: #1e293b;">
+                    <option value="all">All Diseases</option>
+                    <option value="cholera">Cholera</option>
+                    <option value="malaria">Malaria</option>
+                    <option value="typhoid">Typhoid</option>
+                    <option value="dengue">Dengue</option>
+                    <option value="covid">COVID-19</option>
+                </select>
+                <select id="dateFilter" style="padding: 8px; border: 1px solid #0ea5e9; border-radius: 4px; background: white; color: #1e293b;">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="365">Last Year</option>
+                </select>
+                <button onclick="updateDashboardMap()" style="padding: 8px 15px; background: #0ea5e9; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    <i class="fas fa-sync-alt"></i> Update Map
+                </button>
+            </div>
+            
+            <div id="dashboardMap" style="height: 400px; width: 100%; border-radius: 8px; border: 2px solid #0ea5e9;">
+                <div style="height: 100%; display: flex; align-items: center; justify-content: center; background: #f0f9ff; color: #0ea5e9;">
+                    <div style="text-align: center;">
+                        <i class="fas fa-map-marked-alt" style="font-size: 48px; margin-bottom: 15px;"></i>
+                        <p>Loading map...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 20px; margin-top: 15px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 20px; height: 20px; background: rgba(14, 165, 233, 0.3); border-radius: 50%;"></div>
+                    <span style="color: #64748b;">Low Activity</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 20px; height: 20px; background: rgba(14, 165, 233, 0.6); border-radius: 50%;"></div>
+                    <span style="color: #64748b;">Medium Activity</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 20px; height: 20px; background: rgba(14, 165, 233, 0.9); border-radius: 50%;"></div>
+                    <span style="color: #64748b;">High Activity</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 20px; height: 20px; background: #ef4444; border-radius: 50%;"></div>
+                    <span style="color: #64748b;">Outbreak Alert</span>
+                </div>
             </div>
         </div>
         
@@ -717,7 +793,7 @@ $resolved_percentage = $total_reports > 0 ? round(($total_resolved / $total_repo
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; margin-bottom: 30px;">
                 <div>
                     <h4 style="color: #0ea5e9; margin-bottom: 15px;">About This Dashboard</h4>
-                    <p style="color: #cbd5e1;">The Public Health Dashboard provides real-time disease surveillance data to support public health awareness and decision-making.</p>
+                    <p style="color: #cbd5e1;">The Public Health Dashboard provides real-time community health system data to support public health awareness and decision-making.</p>
                 </div>
                 <div>
                     <h4 style="color: #0ea5e9; margin-bottom: 15px;">Data Information</h4>
@@ -730,23 +806,18 @@ $resolved_percentage = $total_reports > 0 ? round(($total_resolved / $total_repo
                 </div>
                 <div>
                     <h4 style="color: #0ea5e9; margin-bottom: 15px;">Resources</h4>
-                    <ul style="list-style: none; padding: 0;">
-                        <li style="margin-bottom: 8px;"><a href="/" style="color: #0ea5e9; text-decoration: none;">Home</a></li>
-                        <li style="margin-bottom: 8px;"><a href="/public/public_dashboard.php" style="color: #0ea5e9; text-decoration: none;">Public Dashboard</a></li>
-                        <li style="margin-bottom: 8px;"><a href="/auth/login.php" style="color: #0ea5e9; text-decoration: none;">Health Worker Login</a></li>
-                        <li style="margin-bottom: 8px;"><a href="/auth/register.php" style="color: #0ea5e9; text-decoration: none;">Register Account</a></li>
-                    </ul>
+                    <p style="color: #cbd5e1;">Access our public health resources and documentation for community health monitoring.</p>
                 </div>
                 <div>
                     <h4 style="color: #0ea5e9; margin-bottom: 15px;">Contact & Support</h4>
-                    <p style="color: #cbd5e1;">For questions about this surveillance system, please contact your local health authority.</p>
+                    <p style="color: #cbd5e1;">For questions about this community health system, please contact your local health authority.</p>
                     <p style="margin-top: 15px; font-size: 0.85rem; color: #94a3b8;">
-                        <strong>Confidentiality Notice:</strong> This system is for authorized public health use only. All data is protected and used solely for disease surveillance.
+                        <strong>Confidentiality Notice:</strong> This system is for authorized public health use only. All data is protected and used solely for community health system.
                     </p>
                 </div>
             </div>
             <div style="text-align: center; padding-top: 20px; border-top: 1px solid #334155;">
-                <p style="color: #cbd5e1;">&copy; 2026 Disease Surveillance System. All rights reserved.</p>
+                <p style="color: #cbd5e1;">&copy; 2026 Community Health Monitoring System. All rights reserved.</p>
                 <p style="color: #94a3b8; font-size: 0.9rem;">Last Updated: <?php echo date('F d, Y \a\t H:i A'); ?> (Server Time)</p>
             </div>
         </div>
@@ -923,6 +994,130 @@ $resolved_percentage = $total_reports > 0 ? round(($total_resolved / $total_repo
             });
         }
         <?php endif; ?>
+        
+        // Disease Map JavaScript
+        var dashboardMap = null;
+        var markersLayer = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initDashboardMap();
+        });
+        
+        function initDashboardMap() {
+            var mapElement = document.getElementById('dashboardMap');
+            if (mapElement && typeof L !== 'undefined') {
+                try {
+                    dashboardMap = L.map('dashboardMap', {
+                        center: [-1.2864, 36.8172],
+                        zoom: 6,
+                        zoomControl: true,
+                        attributionControl: true
+                    });
+                    
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    }).addTo(dashboardMap);
+                    
+                    updateDashboardMap();
+                } catch (e) {
+                    console.error('Error initializing map:', e);
+                }
+            }
+        }
+        
+        function updateDashboardMap() {
+            if (!dashboardMap) return;
+            
+            var disease = document.getElementById('diseaseFilter').value;
+            var days = document.getElementById('dateFilter').value;
+            
+            fetch(`api/get_heatmap_data.php?disease=${disease}&days=${days}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (markersLayer) {
+                        dashboardMap.removeLayer(markersLayer);
+                        markersLayer = null;
+                    }
+                    
+                    if (data.points && data.points.length > 0) {
+                        markersLayer = L.layerGroup().addTo(dashboardMap);
+                        
+                        data.points.forEach(function(p) {
+                            var color = p.intensity > 2 ? '#dc2626' : (p.intensity > 1 ? '#f97316' : '#0ea5e9');
+                            var radius = Math.min(p.intensity * 3, 20);
+                            
+                            var marker = L.circleMarker([p.lat, p.lng], {
+                                radius: radius,
+                                fillColor: color,
+                                color: '#ffffff',
+                                weight: 2,
+                                opacity: 1,
+                                fillOpacity: 0.7
+                            });
+                            var popupContent = '<strong>Disease: ' + (p.disease || 'Unknown') + '</strong><br>';
+                            popupContent += 'Cases: ' + p.intensity + '<br>';
+                            if (p.severity) popupContent += 'Severity: ' + p.severity + '<br>';
+                            if (p.location) popupContent += 'Location: ' + p.location + '<br>';
+                            popupContent += 'Lat: ' + p.lat.toFixed(4) + ', Lng: ' + p.lng.toFixed(4);
+                            marker.bindPopup(popupContent);
+                            markersLayer.addLayer(marker);
+                        });
+                    }
+                    
+                    // Display outbreaks
+                    if (data.outbreaks && data.outbreaks.length > 0) {
+                        if (!markersLayer) {
+                            markersLayer = L.layerGroup().addTo(dashboardMap);
+                        }
+                        data.outbreaks.forEach(function(o) {
+                            var affectedArea = L.circle([o.lat, o.lng], {
+                                radius: o.radius * 1000,
+                                fillColor: '#dc2626',
+                                fillOpacity: 0.15,
+                                color: '#dc2626',
+                                weight: 2,
+                                opacity: 0.6
+                            }).addTo(dashboardMap);
+                            
+                            affectedArea.bindPopup('<div style="min-width:150px;">' +
+                                '<strong style="color:#dc2626;">OUTBREAK ALERT</strong><hr>' +
+                                '<strong>Disease:</strong> ' + o.disease + '<br>' +
+                                '<strong>Location:</strong> ' + (o.location || 'Unknown') + '<br>' +
+                                '<strong>Affected Radius:</strong> ' + o.radius + ' km<br>' +
+                                '<strong>Confirmed Cases:</strong> ' + o.cases_confirmed + '<br>' +
+                                '<strong>Alert Date:</strong> ' + o.alert_date + '</div>');
+                            
+                            var centerMarker = L.circleMarker([o.lat, o.lng], {
+                                radius: 8,
+                                fillColor: '#dc2626',
+                                color: '#ffffff',
+                                weight: 2,
+                                opacity: 1,
+                                fillOpacity: 0.9
+                            }).addTo(dashboardMap);
+                            
+                            centerMarker.bindPopup('<div style="min-width:150px;">' +
+                                '<strong style="color:#dc2626;">Outbreak Center</strong><hr>' +
+                                '<strong>Disease:</strong> ' + o.disease + '<br>' +
+                                '<strong>Location:</strong> ' + (o.location || 'Unknown') + '</div>');
+                        });
+                    }
+                    
+                    // Fit bounds
+                    var allMarkers = [];
+                    if (data.points) {
+                        data.points.forEach(function(p) { allMarkers.push([p.lat, p.lng]); });
+                    }
+                    if (data.outbreaks) {
+                        data.outbreaks.forEach(function(o) { allMarkers.push([o.lat, o.lng]); });
+                    }
+                    if (allMarkers.length > 0) {
+                        var bounds = L.latLngBounds(allMarkers);
+                        dashboardMap.fitBounds(bounds, {padding: [50, 50]});
+                    }
+                });
+        }
     </script>
 </body>
 </html>

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/init_translations.php';
 ?>
         </div>
         
@@ -6,7 +7,7 @@
             <div class="footer-container">
                 <div class="footer-content">
                     <div class="footer-section">
-                        <h4><i class="fas fa-shield-virus"></i> Community Health Monitoring System</h4>
+                        <h4><i class="fas fa-shield-virus"></i> <?php echo t('system_title'); ?></h4>
                         <p>A comprehensive platform for monitoring, reporting, and analyzing disease outbreaks in your community.</p>
                         <div class="footer-stats">
                             <div class="footer-stat">
@@ -48,7 +49,7 @@
                     
                     <div class="footer-section">
                         <h4>Contact & Support</h4>
-                        <p><i class="fas fa-envelope"></i> support@diseasesurveillance.example</p>
+                        <p><i class="fas fa-envelope"></i> support@communityhealthsystem.example</p>
                         <p><i class="fas fa-phone"></i> +1 (234) 567-8900</p>
                         <p><i class="fas fa-clock"></i> 24/7 Emergency Support</p>
                         <div class="social-links">
@@ -62,7 +63,7 @@
                 
                 <div class="footer-bottom">
                     <div class="footer-info">
-                        <p>&copy; <?php echo date('Y'); ?> Community Health Monitoring System. All rights reserved.</p>
+                        <p>&copy; <?php echo date('Y'); ?> <?php echo t('copyright'); ?></p>
                         <p>Built with PHP, MySQL, and Chart.js | Security: SQL Injection Protected | XSS Protected</p>
                     </div>
                     <div class="footer-legal">

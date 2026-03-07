@@ -207,24 +207,24 @@ canvas {
 }
 
 .chart-success {
-    --chart-primary: #51cf66;
-    --chart-secondary: #40c057;
-    --chart-accent: #69db7c;
-    --chart-light: #ebfbee;
+    --chart-primary: #339af0;
+    --chart-secondary: #1976d2;
+    --chart-accent: #4dabf7;
+    --chart-light: #e8f4ff;
 }
 
 .chart-warning {
-    --chart-primary: #ff922b;
-    --chart-secondary: #ff922b;
-    --chart-accent: #ffa94d;
-    --chart-light: #fff4e6;
+    --chart-primary: #1976d2;
+    --chart-secondary: #0d47a1;
+    --chart-accent: #339af0;
+    --chart-light: #e8f4ff;
 }
 
 .chart-danger {
-    --chart-primary: #ff6b6b;
-    --chart-secondary: #ff6b6b;
-    --chart-accent: #ff8787;
-    --chart-light: #fff5f5;
+    --chart-primary: #0d47a1;
+    --chart-secondary: #002171;
+    --chart-accent: #1976d2;
+    --chart-light: #e8f4ff;
 }
 
 .chart-info {
@@ -236,13 +236,13 @@ canvas {
 
 .chart-colorful {
     --color-1: #339af0;
-    --color-2: #51cf66;
-    --color-3: #ff6b6b;
-    --color-4: #ff922b;
+    --color-2: #1976d2;
+    --color-3: #0d47a1;
+    --color-4: #002171;
     --color-5: #4dabf7;
-    --color-6: #40c057;
-    --color-7: #ff922b;
-    --color-8: #ff6b6b;
+    --color-6: #1e88e5;
+    --color-7: #1976d2;
+    --color-8: #0d47a1;
 }
 
 .chart-stats {

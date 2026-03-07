@@ -28,9 +28,11 @@ $error = '';
 $email = '';
 $success_message = '';
 $redirect_url = null;
+$show_registration_popup = false;
+$show_login_success_popup = false;
 
 if (isset($_GET['success']) && $_GET['success'] === 'registered') {
-    $success_message = "Registration successful! Please login with your credentials.";
+    $show_registration_popup = true;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -59,19 +61,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     session_set_cookie_params(604800);
                 }
                 
-                switch ($user['role']) {
-                    case 'citizen':
-                        $redirect_url = '../citizen/dashboard.php';
-                        break;
-                    case 'health_worker':
-                        $redirect_url = '../health_worker/dashboard.php';
-                        break;
-                    case 'admin':
-                        $redirect_url = '../admin/dashboard.php';
-                        break;
-                    default:
-                        $redirect_url = '../index.php';
-                }
+                // Set success message based on role
+                $role_display = ucfirst(str_replace('_', ' ', $user['role']));
+                $success_message = "Welcome back, {$user['username']}! You've successfully logged in as {$role_display}.";
+                $show_login_success_popup = true;
+                
+                // Delay redirect to show popup
+                $redirect_url = '../index.php';
             } else {
                 $error = $message;
             }
@@ -79,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-if ($redirect_url) {
+if ($redirect_url && !$show_login_success_popup) {
     header('Location: ' . $redirect_url);
     exit();
 }
@@ -93,46 +89,107 @@ $csrf_token = generateCSRFToken();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Login - Community Surveillance System</title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            background: linear-gradient(135deg, #f8fbff 0%, #e8f4ff 100%);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #333;
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f0f7ff;
+            min-height: 100vh;
+            color: #1e293b;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 30px 20px;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
-        
-        .container {
-            flex: 1;
+
+        /* Success Popup */
+        .temp-popup {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #10b981;
+            color: white;
+            padding: 16px 30px;
+            border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
             display: flex;
-            flex-direction: column;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+            align-items: center;
+            gap: 12px;
+            z-index: 1000;
+            font-weight: 500;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            min-width: 350px;
+            justify-content: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
-        header {
+
+        .temp-popup.login-success {
+            background: #10b981;
+        }
+
+        .temp-popup.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .temp-popup i:first-child {
+            font-size: 1.5rem;
+        }
+
+        .temp-popup .close-popup {
+            cursor: pointer;
+            font-size: 1.2rem;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+            margin-left: auto;
+        }
+
+        .temp-popup .close-popup:hover {
+            opacity: 1;
+        }
+
+        /* Header Stats */
+        .header-stats {
+            display: flex;
+            justify-content: flex-end;
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+
+        .stat-item {
             text-align: center;
-            padding: 40px 20px;
+            background: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
-        
-        header h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 2.5rem;
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1e293b;
         }
-        
-        .tagline {
-            color: #666;
-            font-size: 1.1rem;
-            margin-bottom: 10px;
+
+        .stat-label {
+            font-size: 14px;
+            color: #64748b;
         }
+
         
         main {
             flex: 1;
@@ -141,140 +198,155 @@ $csrf_token = generateCSRFToken();
             justify-content: center;
             padding: 20px 0;
         }
+
+        .login-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            background: white;
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-width: 1100px;
+            width: 100%;
+        }
+
         
         .login-container {
-            background-color: white;
-            padding: 50px 40px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 119, 204, 0.15);
-            max-width: 450px;
-            width: 100%;
-            border: 1px solid #e0e0e0;
+            padding: 48px;
+            background: white;
         }
-        
+
         .login-header {
-            text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 32px;
         }
-        
+
         .login-header h2 {
-            color: #333;
-            margin-bottom: 15px;
-            font-size: 1.8rem;
+            font-size: 36px;
+            color: #1e293b;
+            margin-bottom: 8px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 12px;
         }
-        
+
         .login-header h2 i {
-            color: #0077cc;
+            color: #2563eb;
         }
-        
+
         .login-header p {
-            color: #666;
-            font-size: 1rem;
+            color: #64748b;
+            font-size: 16px;
         }
-        
+
+        .alert {
+            padding: 16px 20px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .alert-success {
+            background: #dcfce7;
+            color: #16a34a;
+            border: 1px solid #bbf7d0;
+        }
+
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 24px;
         }
-        
+
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            color: #333;
+            color: #1e293b;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 14px;
         }
-        
+
+        .form-group label i {
+            color: #2563eb;
+            width: 20px;
+            margin-right: 8px;
+        }
+
         .form-control {
             width: 100%;
-            padding: 14px 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
+            padding: 14px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 15px;
             transition: all 0.3s;
-            box-sizing: border-box;
+            background: #f8fafc;
         }
-        
+
         .form-control:focus {
             outline: none;
-            border-color: #0077cc;
-            box-shadow: 0 0 0 3px rgba(0, 119, 204, 0.2);
+            border-color: #2563eb;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
         }
-        
+
+        .form-control::placeholder {
+            color: #94a3b8;
+        }
+
         .remember-forgot {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
+            margin-bottom: 24px;
         }
-        
+
         .remember-me {
             display: flex;
             align-items: center;
             gap: 8px;
         }
-        
-        .remember-me input {
-            margin: 0;
-            accent-color: #0077cc;
+
+        .remember-me input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #2563eb;
+            cursor: pointer;
         }
-        
+
         .remember-me label {
-            margin: 0;
-            color: #333;
-            font-size: 0.9rem;
-            font-weight: normal;
+            color: #475569;
+            font-size: 14px;
+            cursor: pointer;
         }
-        
+
         .forgot-password a {
-            color: #0077cc;
+            color: #2563eb;
             text-decoration: none;
-            font-size: 0.9rem;
+            font-size: 14px;
             font-weight: 500;
         }
-        
+
         .forgot-password a:hover {
             text-decoration: underline;
-            color: #005599;
         }
-        
-        .alert {
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .alert-success {
-            background-color: #e8f5e8;
-            color: #2e7d32;
-            border-left: 4px solid #4caf50;
-        }
-        
-        .alert-error {
-            background-color: #ffebee;
-            color: #d32f2f;
-            border-left: 4px solid #d32f2f;
-        }
-        
-        .alert i {
-            font-size: 1.2rem;
-        }
-        
+
         .btn-login {
             width: 100%;
             padding: 16px;
-            background-color: #0077cc;
+            background: #2563eb;
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
+            border-radius: 16px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
@@ -283,232 +355,591 @@ $csrf_token = generateCSRFToken();
             justify-content: center;
             gap: 10px;
         }
-        
+
         .btn-login:hover {
-            background-color: #005599;
+            background: #1d4ed8;
             transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.3);
         }
-        
+
         .register-link {
             text-align: center;
-            margin-top: 30px;
-            padding-top: 25px;
-            border-top: 1px solid #eee;
-            color: #666;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 2px solid #e2e8f0;
+            color: #64748b;
+            font-size: 15px;
         }
-        
+
         .register-link a {
-            color: #0077cc;
+            color: #2563eb;
             text-decoration: none;
             font-weight: 600;
+            margin-left: 5px;
         }
-        
+
         .register-link a:hover {
             text-decoration: underline;
-            color: #005599;
         }
+
         
-        .demo-credentials {
-            margin-top: 35px;
-            padding: 20px;
-            background-color: #f8fbff;
-            border-radius: 10px;
-            border-left: 4px solid #0077cc;
+        .info-panel {
+            background: #f8fafc;
+            padding: 48px 32px;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #e2e8f0;
         }
-        
-        .demo-credentials h4 {
-            color: #333;
-            margin-bottom: 15px;
-            font-size: 1rem;
+
+        .info-header {
+            margin-bottom: 32px;
+        }
+
+        .info-header h3 {
+            font-size: 24px;
+            color: #1e293b;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .info-header p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .features-list {
+            display: grid;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .feature-item {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: white;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #2563eb;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-text h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .feature-text p {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .demo-box {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            margin: 20px 0;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .demo-box h4 {
+            font-size: 18px;
+            color: #1e293b;
+            margin-bottom: 16px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
-        
-        .demo-credentials h4 i {
-            color: #0077cc;
+
+        .demo-box h4 i {
+            color: #2563eb;
         }
-        
-        .demo-credentials p {
-            color: #666;
-            font-size: 0.9rem;
-            margin: 8px 0;
-            padding-left: 25px;
-            position: relative;
+
+        .demo-credentials {
+            display: grid;
+            gap: 12px;
         }
-        
-        .demo-credentials p strong {
-            color: #333;
+
+        .demo-item {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .demo-item i {
+            color: #2563eb;
+            font-size: 18px;
+        }
+
+        .demo-item-content {
+            flex: 1;
+        }
+
+        .demo-role {
             font-weight: 600;
+            color: #1e293b;
+            font-size: 14px;
+            margin-bottom: 4px;
         }
-        
-        .demo-credentials p::before {
-            content: "•";
-            color: #0077cc;
-            position: absolute;
-            left: 10px;
+
+        .demo-credentials-text {
+            color: #64748b;
+            font-size: 13px;
+            font-family: monospace;
         }
-        
-        footer {
-            margin-top: 40px;
-            padding: 25px 0;
+
+        .stats-mini {
+            display: flex;
+            justify-content: space-around;
+            margin-top: auto;
+            padding-top: 32px;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .stat-mini-item {
             text-align: center;
-            color: #666;
-            border-top: 1px solid #e8f4ff;
         }
-        
-        .footer-bottom p {
-            margin: 5px 0;
-            font-size: 0.9rem;
+
+        .stat-mini-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2563eb;
+            margin-bottom: 4px;
         }
-        
-        .footer-bottom p:first-child {
+
+        .stat-mini-label {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+    
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-width: 400px;
+            overflow: hidden;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            background: #2563eb;
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .modal-header i {
+            font-size: 2rem;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
             font-weight: 600;
-            color: #333;
         }
+
+        .modal-body {
+            padding: 30px;
+            text-align: center;
+        }
+
+        .modal-body i {
+            font-size: 4rem;
+            color: #2563eb;
+            margin-bottom: 20px;
+        }
+
+        .modal-body p {
+            color: #1e293b;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .modal-footer {
+            padding: 20px 30px;
+            text-align: center;
+            border-top: 2px solid #e2e8f0;
+        }
+
+        .modal-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 14px 40px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.3);
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 25px;
+            top: 20px;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .close-modal:hover {
+            opacity: 1;
+        }
+
         
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
+        @media (max-width: 968px) {
+            .login-wrapper {
+                grid-template-columns: 1fr;
             }
             
+            .header-stats {
+                justify-content: center;
+            }
+            
+            .info-panel {
+                border-left: none;
+                border-top: 1px solid #e2e8f0;
+            }
+        }
+
+        @media (max-width: 576px) {
             .login-container {
-                padding: 30px 25px;
+                padding: 32px 24px;
             }
             
-            header h1 {
-                font-size: 2rem;
+            .info-panel {
+                padding: 32px 24px;
             }
             
-            .tagline {
-                font-size: 1rem;
-            }
-            
-            .remember-forgot {
-                flex-direction: column;
-                align-items: flex-start;
+            .header-stats {
+                flex-wrap: wrap;
                 gap: 15px;
             }
             
-            .forgot-password {
-                width: 100%;
-                text-align: right;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .login-container {
-                padding: 25px 20px;
-            }
-            
-            header {
-                padding: 30px 15px;
-            }
-            
-            header h1 {
-                font-size: 1.8rem;
+            .stat-item {
+                padding: 10px 18px;
             }
             
             .login-header h2 {
-                font-size: 1.5rem;
+                font-size: 28px;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Success Popup for Login -->
+    <div id="successPopup" class="temp-popup login-success">
+        <i class="fas fa-check-circle"></i>
+        <span class="message" id="popupMessage">Welcome back! You've successfully logged in.</span>
+        <i class="fas fa-times close-popup" onclick="hidePopup()"></i>
+    </div>
+
     <div class="container">
-        <header>
-            <h1><i class="fas fa-shield-virus"></i>Community Health Monitoring System</h1>
-            <p class="tagline">Secure Login Portal</p>
-        </header>
-        
         <main>
-            <div class="login-container">
-                <div class="login-header">
-                    <h2><i class="fas fa-sign-in-alt"></i> Login to Your Account</h2>
-                    <p>Access your personalized dashboard</p>
-                </div>
+            <div class="login-wrapper">
                 
-                <?php if ($success_message): ?>
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle"></i>
-                        <?php echo htmlspecialchars($success_message); ?>
-                    </div>
-                <?php endif; ?>
-                
-                <?php if ($error): ?>
-                    <div class="alert alert-error">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <?php echo htmlspecialchars($error); ?>
-                    </div>
-                <?php endif; ?>
-                
-                <form method="POST" action="" id="loginForm">
-                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
-                    
-                    <div class="form-group">
-                        <label for="email">Email Address</label>
-                        <input type="email" 
-                               id="email" 
-                               name="email" 
-                               class="form-control" 
-                               value="<?php echo htmlspecialchars($email); ?>" 
-                               required
-                               autocomplete="email"
-                               autofocus
-                               placeholder="Enter your email address">
+                <div class="login-container">
+                    <div class="login-header">
+                        <h2>
+                            <i class="fas fa-sign-in-alt"></i>
+                            Welcome Back
+                        </h2>
+                        <p>Access your community surveillance dashboard</p>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" 
-                               id="password" 
-                               name="password" 
-                               class="form-control" 
-                               required
-                               autocomplete="current-password"
-                               placeholder="Enter your password">
-                    </div>
-                    
-                    <div class="remember-forgot">
-                        <div class="remember-me">
-                            <input type="checkbox" id="remember" name="remember">
-                            <label for="remember">Remember me</label>
+                    <?php if ($error): ?>
+                        <div class="alert alert-error">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <?php echo htmlspecialchars($error); ?>
                         </div>
-                        <div class="forgot-password">
-                            <a href="#">Forgot password?</a>
+                    <?php endif; ?>
+                    
+                    <form method="POST" action="" id="loginForm">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
+                        
+                        <div class="form-group">
+                            <label for="email">
+                                <i class="fas fa-envelope"></i>
+                                Email Address
+                            </label>
+                            <input type="email" 
+                                   id="email" 
+                                   name="email" 
+                                   class="form-control" 
+                                   value="<?php echo htmlspecialchars($email); ?>" 
+                                   required
+                                   autocomplete="email"
+                                   autofocus
+                                   placeholder="you@example.com">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="password">
+                                <i class="fas fa-lock"></i>
+                                Password
+                            </label>
+                            <input type="password" 
+                                   id="password" 
+                                   name="password" 
+                                   class="form-control" 
+                                   required
+                                   autocomplete="current-password"
+                                   placeholder="Enter your password">
+                        </div>
+                        
+                        <div class="remember-forgot">
+                            <div class="remember-me">
+                                <input type="checkbox" id="remember" name="remember">
+                                <label for="remember">Remember me</label>
+                            </div>
+                            <div class="forgot-password">
+                                <a href="#">Forgot password?</a>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="btn-login">
+                                <i class="fas fa-sign-in-alt"></i>
+                                Sign In
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div class="register-link">
+                        Don't have an account? 
+                        <a href="register.php">
+                            <i class="fas fa-user-plus"></i>
+                            Create Account
+                        </a>
+                    </div>
+                </div>
+
+                
+                <div class="info-panel">
+                    <div class="info-header">
+                        <h3>Community Surveillance</h3>
+                        <p>Track, monitor, and respond to health concerns together</p>
+                    </div>
+
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-shield-virus"></i>
+                            </div>
+                            <div class="feature-text">
+                                <h4>Real-time Monitoring</h4>
+                                <p>Track disease outbreaks as they happen</p>
+                            </div>
+                        </div>
+
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-bell"></i>
+                            </div>
+                            <div class="feature-text">
+                                <h4>Instant Alerts</h4>
+                                <p>Get notified about health concerns</p>
+                            </div>
+                        </div>
+
+                        <div class="feature-item">
+                            <div class="feature-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <div class="feature-text">
+                                <h4>Data Insights</h4>
+                                <p>Make informed decisions with analytics</p>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <button type="submit" class="btn-login">
-                            <i class="fas fa-sign-in-alt"></i> Login
-                        </button>
+
+                    <div class="demo-box">
+                        <h4>
+                            <i class="fas fa-vial"></i>
+                            Demo Accounts
+                        </h4>
+                        <div class="demo-credentials">
+                            <div class="demo-item">
+                                <i class="fas fa-user"></i>
+                                <div class="demo-item-content">
+                                    <div class="demo-role">Citizen</div>
+                                    <div class="demo-credentials-text">citizen@test.com / password123</div>
+                                </div>
+                            </div>
+                            <div class="demo-item">
+                                <i class="fas fa-user-md"></i>
+                                <div class="demo-item-content">
+                                    <div class="demo-role">Health Worker</div>
+                                    <div class="demo-credentials-text">health@test.com / password123</div>
+                                </div>
+                            </div>
+                            <div class="demo-item">
+                                <i class="fas fa-user-cog"></i>
+                                <div class="demo-item-content">
+                                    <div class="demo-role">Administrator</div>
+                                    <div class="demo-credentials-text">admin@test.com / password123</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </form>
-                
-                <div class="register-link">
-                    Don't have an account? <a href="register.php">Register here</a>
-                </div>
-                
-                <div class="demo-credentials">
-                    <h4><i class="fas fa-vial"></i> Demo Accounts (Create via Registration First):</h4>
-                    <p><strong>Citizen:</strong> citizen@test.com / password123</p>
-                    <p><strong>Health Worker:</strong> health@test.com / password123</p>
-                    <p><strong>Admin:</strong> admin@test.com / password123</p>
+
+                    <div class="stats-mini">
+                        <div class="stat-mini-item">
+                            <div class="stat-mini-number">10K+</div>
+                            <div class="stat-mini-label">Reports</div>
+                        </div>
+                        <div class="stat-mini-item">
+                            <div class="stat-mini-number">98%</div>
+                            <div class="stat-mini-label">Response</div>
+                        </div>
+                        <div class="stat-mini-item">
+                            <div class="stat-mini-number">24/7</div>
+                            <div class="stat-mini-label">Monitoring</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
-        
-        <footer>
-            <div class="footer-bottom">
-                <p>&copy; <?php echo date('Y'); ?> Community Health Monitoring System</p>
-                <p>Secure Login | Session Protection Enabled</p>
+    </div>
+    
+    
+    <div id="registrationPopup" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closePopup()">&times;</span>
+            <div class="modal-header">
+                <i class="fas fa-check-circle"></i>
+                <h3>Welcome!</h3>
             </div>
-        </footer>
+            <div class="modal-body">
+                <i class="fas fa-party-horn"></i>
+                <p>Your account has been created successfully!<br>Please login to continue.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn" onclick="closePopup()">
+                    <i class="fas fa-sign-in-alt"></i> Login Now
+                </button>
+            </div>
+        </div>
     </div>
     
     <script>
+        <?php if ($show_registration_popup): ?>
+        window.onload = function() {
+            showRegistrationPopup();
+        };
+        <?php endif; ?>
+
+        <?php if ($show_login_success_popup): ?>
+        window.onload = function() {
+            showPopup('<?php echo addslashes($success_message); ?>');
+            
+            // Redirect after popup
+            setTimeout(function() {
+                window.location.href = '<?php echo $redirect_url; ?>';
+            }, 2000);
+        };
+        <?php endif; ?>
+
+        function showPopup(message) {
+            const popup = document.getElementById('successPopup');
+            const messageSpan = document.getElementById('popupMessage');
+            
+            if (message) {
+                messageSpan.textContent = message;
+            }
+            
+            popup.classList.add('show');
+            
+            // Don't auto-hide if we're redirecting
+            <?php if (!$show_login_success_popup): ?>
+            setTimeout(function() {
+                hidePopup();
+            }, 3000);
+            <?php endif; ?>
+        }
+
+        function hidePopup() {
+            const popup = document.getElementById('successPopup');
+            popup.classList.remove('show');
+        }
+
+        function showRegistrationPopup() {
+            document.getElementById('registrationPopup').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePopup() {
+            document.getElementById('registrationPopup').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        
+        window.onclick = function(event) {
+            const modal = document.getElementById('registrationPopup');
+            if (event.target === modal) {
+                closePopup();
+            }
+        }
+
+    
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
@@ -536,5 +967,6 @@ $csrf_token = generateCSRFToken();
             }
         });
     </script>
+   <?php  require_once '../includes/footer.php'; ?>
 </body>
 </html>

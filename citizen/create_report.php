@@ -700,23 +700,29 @@ $csrf_token = generateCSRFToken();
             const manualLocation = document.getElementById('manual_location');
             const locationHidden = document.getElementById('locationHidden');
 
-            const kenyaSample = {
-                "counties": [
-                    {
-                        "name": "Nairobi",
-                        "subcounties": [
-                            {"name":"Westlands","divisions":[{"name":"Kangemi","locations":[{"name":"Kangemi North","villages":["Village A","Village B"]}]}]},
-                            {"name":"Kibra","divisions":[{"name":"Soweto","locations":[{"name":"Soweto East","villages":["Village C"]}]}]}
-                        ]
-                    },
-                    {
-                        "name": "Mombasa",
-                        "subcounties": [
-                            {"name":"Mvita","divisions":[{"name":"Town","locations":[{"name":"Old Town","villages":["Village X"]}]}]}
-                        ]
-                    }
-                ]
-            };
+            
+
+
+
+
+            function tryLoadKenyaData() {
+    fetch('../assets/data/kenya_location.json')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to load Kenya locations');
+            }
+            return response.json();
+        })
+        .then(data => {
+            kenyaData = data;
+            initKenya();
+        })
+        .catch(error => {
+            console.error('Kenya location JSON error:', error);
+            alert('Unable to load Kenya locations. Please try again later.');
+        });
+}
+
 
             let kenyaData = null;
 
@@ -736,14 +742,11 @@ $csrf_token = generateCSRFToken();
                 for (let i = idx+1; i < order.length; i++) { elems[order[i]].innerHTML = '<option value="">Select</option><option value="__other__">Other / Not Listed</option>'; }
             }
 
-            function tryLoadKenyaData() {
-                fetch('../assets/data/kenya_locations.json').then(r=>{ if (!r.ok) throw new Error('no'); return r.json(); }).then(data=>{ kenyaData = data; initKenya(); }).catch(err=>{ console.log('Fallback to sample:', err); kenyaData = kenyaSample; initKenya(); });
-            }
-
+          
             function initKenya() {
-                const counties = kenyaData.counties.map(c => ({name: c.name}));
-                populateSelect(countySelect, kenyaData.counties, 'Select County');
-            }
+    populateSelect(countySelect, kenyaData.counties, 'Select County');
+}
+
 
             countrySearch.addEventListener('input', function(){
                 const q = this.value.toLowerCase();

@@ -76,6 +76,8 @@ try {
     <title>Health Worker Dashboard  System</title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <link rel="stylesheet" href="../assets/css/dashboard.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <style>
         body {
             background: #ffffff;
@@ -532,6 +534,63 @@ try {
             </div>
         </div>
         
+        <!-- Disease & Outbreak Map -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h3><i class="fas fa-map-marked-alt" style="color: #0ea5e9;"></i> Disease & Outbreak Map</h3>
+                <a href="outbreak_tracking.php" class="view-all-link">View Outbreak Tracking →</a>
+            </div>
+            <p style="color: #666; margin-bottom: 15px;">Geographic distribution of disease reports and active outbreaks across Kenya</p>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <select id="diseaseFilter" style="padding: 8px; border: 1px solid #0ea5e9; border-radius: 4px; background: white; color: #1e293b;">
+                    <option value="all">All Diseases</option>
+                    <option value="cholera">Cholera</option>
+                    <option value="malaria">Malaria</option>
+                    <option value="typhoid">Typhoid</option>
+                    <option value="dengue">Dengue</option>
+                    <option value="covid">COVID-19</option>
+                </select>
+                <select id="dateFilter" style="padding: 8px; border: 1px solid #0ea5e9; border-radius: 4px; background: white; color: #1e293b;">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="365">Last Year</option>
+                </select>
+                <button onclick="updateHWMap()" style="padding: 8px 15px; background: #0ea5e9; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    <i class="fas fa-sync-alt"></i> Update
+                </button>
+            </div>
+            
+            <div id="hwMap" style="height: 400px; width: 100%; border-radius: 8px; border: 2px solid #0ea5e9;">
+                <div style="height: 100%; display: flex; align-items: center; justify-content: center; background: #f0f9ff; color: #0ea5e9;">
+                    <div style="text-align: center;">
+                        <i class="fas fa-map-marked-alt" style="font-size: 48px; margin-bottom: 15px;"></i>
+                        <p>Loading map...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 20px; margin-top: 15px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 20px; height: 20px; background: rgba(14, 165, 233, 0.3); border-radius: 50%;"></div>
+                    <span style="color: #666;">Low Activity</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 20px; height: 20px; background: rgba(14, 165, 233, 0.6); border-radius: 50%;"></div>
+                    <span style="color: #666;">Medium Activity</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 20px; height: 20px; background: rgba(14, 165, 233, 0.9); border-radius: 50%;"></div>
+                    <span style="color: #666;">High Activity</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 20px; height: 20px; background: #ef4444; border-radius: 50%;"></div>
+                    <span style="color: #666;">Outbreak Alert</span>
+                </div>
+            </div>
+        </div>
+        
         <div class="dashboard-section">
             <div class="section-header">
                 <h3>Recent Pending Reports</h3>
@@ -866,6 +925,130 @@ try {
                 });
             });
         });
+        
+        // Disease Map JavaScript
+        var hwMap = null;
+        var hwMarkersLayer = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initHWMap();
+        });
+        
+        function initHWMap() {
+            var mapElement = document.getElementById('hwMap');
+            if (mapElement && typeof L !== 'undefined') {
+                try {
+                    hwMap = L.map('hwMap', {
+                        center: [-1.2864, 36.8172],
+                        zoom: 6,
+                        zoomControl: true,
+                        attributionControl: true
+                    });
+                    
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                    }).addTo(hwMap);
+                    
+                    updateHWMap();
+                } catch (e) {
+                    console.error('Error initializing map:', e);
+                }
+            }
+        }
+        
+        function updateHWMap() {
+            if (!hwMap) return;
+            
+            var disease = document.getElementById('diseaseFilter').value;
+            var days = document.getElementById('dateFilter').value;
+            
+            fetch(`../public/api/get_heatmap_data.php?disease=${disease}&days=${days}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (hwMarkersLayer) {
+                        hwMap.removeLayer(hwMarkersLayer);
+                        hwMarkersLayer = null;
+                    }
+                    
+                    if (data.points && data.points.length > 0) {
+                        hwMarkersLayer = L.layerGroup().addTo(hwMap);
+                        
+                        data.points.forEach(function(p) {
+                            var color = p.intensity > 2 ? '#dc2626' : (p.intensity > 1 ? '#f97316' : '#0ea5e9');
+                            var radius = Math.min(p.intensity * 3, 20);
+                            
+                            var marker = L.circleMarker([p.lat, p.lng], {
+                                radius: radius,
+                                fillColor: color,
+                                color: '#ffffff',
+                                weight: 2,
+                                opacity: 1,
+                                fillOpacity: 0.7
+                            });
+                            var popupContent = '<strong>Disease: ' + (p.disease || 'Unknown') + '</strong><br>';
+                            popupContent += 'Cases: ' + p.intensity + '<br>';
+                            if (p.severity) popupContent += 'Severity: ' + p.severity + '<br>';
+                            if (p.location) popupContent += 'Location: ' + p.location + '<br>';
+                            popupContent += 'Lat: ' + p.lat.toFixed(4) + ', Lng: ' + p.lng.toFixed(4);
+                            marker.bindPopup(popupContent);
+                            hwMarkersLayer.addLayer(marker);
+                        });
+                    }
+                    
+                    // Display outbreaks
+                    if (data.outbreaks && data.outbreaks.length > 0) {
+                        if (!hwMarkersLayer) {
+                            hwMarkersLayer = L.layerGroup().addTo(hwMap);
+                        }
+                        data.outbreaks.forEach(function(o) {
+                            var affectedArea = L.circle([o.lat, o.lng], {
+                                radius: o.radius * 1000,
+                                fillColor: '#ef4444',
+                                fillOpacity: 0.15,
+                                color: '#ef4444',
+                                weight: 2,
+                                opacity: 0.6
+                            }).addTo(hwMap);
+                            
+                            affectedArea.bindPopup('<div style="min-width:150px;">' +
+                                '<strong style="color:#ef4444;">OUTBREAK ALERT</strong><hr>' +
+                                '<strong>Disease:</strong> ' + o.disease + '<br>' +
+                                '<strong>Location:</strong> ' + (o.location || 'Unknown') + '<br>' +
+                                '<strong>Affected Radius:</strong> ' + o.radius + ' km<br>' +
+                                '<strong>Confirmed Cases:</strong> ' + o.cases_confirmed + '<br>' +
+                                '<strong>Alert Date:</strong> ' + o.alert_date + '</div>');
+                            
+                            var centerMarker = L.circleMarker([o.lat, o.lng], {
+                                radius: 8,
+                                fillColor: '#ef4444',
+                                color: '#ffffff',
+                                weight: 2,
+                                opacity: 1,
+                                fillOpacity: 0.9
+                            }).addTo(hwMap);
+                            
+                            centerMarker.bindPopup('<div style="min-width:150px;">' +
+                                '<strong style="color:#ef4444;">Outbreak Center</strong><hr>' +
+                                '<strong>Disease:</strong> ' + o.disease + '<br>' +
+                                '<strong>Location:</strong> ' + (o.location || 'Unknown') + '</div>');
+                        });
+                    }
+                    
+                    // Fit bounds
+                    var allMarkers = [];
+                    if (data.points) {
+                        data.points.forEach(function(p) { allMarkers.push([p.lat, p.lng]); });
+                    }
+                    if (data.outbreaks) {
+                        data.outbreaks.forEach(function(o) { allMarkers.push([o.lat, o.lng]); });
+                    }
+                    if (allMarkers.length > 0) {
+                        var bounds = L.latLngBounds(allMarkers);
+                        hwMap.fitBounds(bounds, {padding: [50, 50]});
+                    }
+                });
+        }
     </script>
 </body>
 </html>

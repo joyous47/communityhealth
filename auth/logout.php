@@ -148,7 +148,7 @@ session_destroy();
         <h1 class="logout-title">Logging Out</h1>
         
         <div class="logout-message">
-            You have been successfully logged out from the Disease Surveillance System.
+            You have been successfully logged out from the Community Health Surveillance System.
         </div>
         
         <div class="redirect-message">

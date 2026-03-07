@@ -1,0 +1,15 @@
+<?php
+define('SMS_PROVIDER', 'africastalking');
+define('AFRICASTALKING_API_KEY', 'YOUR_API_KEY');
+define('AFRICASTALKING_USERNAME', 'YOUR_USERNAME');
+define('AFRICASTALKING_SENDER_ID', 'CHMEWS');
+define('TWILIO_ACCOUNT_SID', 'YOUR_ACCOUNT_SID');
+define('TWILIO_AUTH_TOKEN', 'YOUR_AUTH_TOKEN');
+define('TWILIO_PHONE_NUMBER', '+1234567890');
+define('SMS_ENABLED', true);
+define('SMS_MAX_LENGTH', 160);
+define('SMS_REPORT_KEYWORD', 'CHMEWS');
+define('SMS_CONFIRMATION_ENABLED', true);
+define('PHONE_REGEX', '/^(?:\+254|254|0)(7|1)\d{8}$/');
+define('SMS_DEBUG', false);
+?>

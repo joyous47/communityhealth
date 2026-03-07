@@ -127,7 +127,6 @@ try {
         .page-header {
             background: linear-gradient(135deg, #4da8da 0%, #0077be 100%);
             color: white;
-            padding: 30px 0;
             margin-bottom: 30px;
             border-radius: 0;
         }
@@ -141,6 +140,7 @@ try {
         .page-header p {
             margin: 10px 0 0 0;
             font-size: 1.1rem;
+            color: #000;
             opacity: 0.9;
         }
 
@@ -360,7 +360,6 @@ try {
         
         .container {
             background: white;
-            min-height: 100vh;
             padding: 20px;
         }
     </style>
@@ -369,8 +368,8 @@ try {
     <div class="container">
         <div class="page-header">
             <div class="container">
-                <h1><i class="fas fa-chart-line"></i> Analytics Dashboard</h1>
-                <p>Monitor system performance and disease surveillance metrics</p>
+                <h1 style="color: #000;"><i class="fas fa-chart-line"></i> Analytics Dashboard</h1>
+                <p>Monitor system performance and community health system metrics</p>
             </div>
         </div>
 
